@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Memórias &amp; Legado — Site de Memória e História Familiar</title>
+<meta name="description" content="Um arquivo vivo de memórias, ramos genealógicos e locais marcantes da família.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ===================== LOADING OVERLAY ===================== -->
+<div id="loadingOverlay" class="loading-overlay">
+  <span class="spinner" aria-hidden="true"></span>
+  <span class="loading-text">Recuperando as memórias da família…</span>
+</div>
+
+<!-- ===================== HEADER ===================== -->
+<header class="site-header" id="siteHeader">
+  <div class="header-inner">
+    <div class="brand">
+      <span class="brand-icon" aria-hidden="true">${icon:scroll}</span>
+      <span class="brand-name">Memórias &amp; Legado</span>
+    </div>
+    <nav class="main-nav">
+      <a href="#linha">Linha do Tempo</a>
+      <a href="#ramos">Ramos</a>
+      <a href="#locais">Locais</a>
+      <button type="button" class="btn btn-outline btn-admin-nav" id="btnGoAdmin">
+        <span class="icon" aria-hidden="true">${icon:lock}</span> Área do Administrador
+      </button>
+    </nav>
+    <button type="button" class="mobile-menu-btn" id="btnMobileMenu" aria-label="Abrir menu">${icon:menu}</button>
+  </div>
+  <nav class="mobile-nav" id="mobileNav">
+    <a href="#linha">Linha do Tempo</a>
+    <a href="#ramos">Ramos</a>
+    <a href="#locais">Locais</a>
+    <button type="button" class="btn btn-outline btn-admin-nav" id="btnGoAdminMobile">
+      <span class="icon" aria-hidden="true">${icon:lock}</span> Área do Administrador
+    </button>
+  </nav>
+</header>
+
+<!-- ===================== PUBLIC VIEW ===================== -->
+<main id="publicView" class="public-view">
+
+  <!-- HERO -->
+  <section class="hero" id="topo">
+    <div class="hero-inner">
+      <span class="eyebrow">Árvore &amp; Herança</span>
+      <h1 class="hero-title">Família<br><span id="heroFamilyName">—</span></h1>
+      <p class="hero-motto">&ldquo;<span id="heroMotto"></span>&rdquo;</p>
+      <div class="hero-actions">
+        <a href="#ramos" class="btn btn-primary">Explorar os Ramos <span class="icon" aria-hidden="true">${icon:arrow-down}</span></a>
+        <a href="#locais" class="btn btn-secondary">Locais Marcantes</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- TIMELINE -->
+  <section class="section timeline-section" id="linha">
+    <div class="section-inner">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">Cronologia</span>
+          <h2 class="section-title">Marcos que nos moldaram</h2>
+        </div>
+        <span class="icon icon-lg muted" aria-hidden="true">${icon:milestone}</span>
+      </div>
+      <div class="timeline-grid" id="timelineGrid"></div>
+    </div>
+  </section>
+
+  <!-- BRANCHES -->
+  <section class="section branches-section" id="ramos">
+    <div class="section-inner">
+      <div class="section-head section-head-center">
+        <span class="eyebrow">Árvore Genealógica</span>
+        <h2 class="section-title">Ramos &amp; Núcleos</h2>
+        <p class="section-desc">Cada ramo carrega sua própria história. Toque para conhecer os integrantes e as memórias de cada linhagem.</p>
+      </div>
+      <div class="carousel-wrap">
+        <button type="button" class="carousel-arrow carousel-arrow-left hidden" id="branchPrev" aria-label="Anterior">${icon:chevron-left}</button>
+        <button type="button" class="carousel-arrow carousel-arrow-right hidden" id="branchNext" aria-label="Próximo">${icon:chevron-right}</button>
+        <div class="branches-grid" id="branchesGrid"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PLACES -->
+  <section class="section places-section" id="locais">
+    <div class="section-inner">
+      <div class="section-head section-head-center">
+        <span class="eyebrow">Geografia Afetiva</span>
+        <h2 class="section-title">Locais Marcantes</h2>
+      </div>
+      <div class="places-grid" id="placesGrid"></div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <span class="brand-icon" aria-hidden="true">${icon:scroll}</span>
+        <div>
+          <div class="footer-family-name">Família <span id="footerFamilyName">—</span></div>
+          <div class="footer-tag">Um arquivo vivo de memórias e histórias.</div>
+        </div>
+      </div>
+      <button type="button" class="btn btn-ghost" id="btnGoAdminFooter">
+        <span class="icon" aria-hidden="true">${icon:settings}</span> Área de Gestão / Admin
+      </button>
+    </div>
+  </footer>
+</main>
+
+<!-- ===================== ADMIN VIEW ===================== -->
+<main id="adminView" class="admin-view hidden">
+  <div class="admin-topbar">
+    <button type="button" class="btn btn-outline" id="btnGoPublic">
+      <span class="icon" aria-hidden="true">${icon:arrow-left}</span> Voltar ao site
+    </button>
+    <span class="sync-label" id="syncLabel"></span>
+  </div>
+
+  <h1 class="admin-title">Painel de Gestão</h1>
+  <p class="admin-subtitle">Edite os conteúdos do site. As alterações são salvas na nuvem (quando configurada) e ficam visíveis para todos os visitantes.</p>
+
+  <!-- HERO CARD -->
+  <div class="admin-card">
+    <div class="admin-card-head">
+      <h3><span class="icon accent" aria-hidden="true">${icon:home}</span> Página Inicial &amp; Marcos</h3>
+      <button type="button" class="btn btn-primary btn-sm" id="btnEditHero">
+        <span class="icon" aria-hidden="true">${icon:pencil}</span> Editar
+      </button>
+    </div>
+    <div class="admin-card-summary" id="heroSummary"></div>
+  </div>
+
+  <!-- BRANCHES CARD -->
+  <div class="admin-card">
+    <div class="admin-card-head">
+      <h3><span class="icon accent" aria-hidden="true">${icon:git-branch}</span> Ramos &amp; Integrantes</h3>
+      <button type="button" class="btn btn-primary btn-sm" id="btnNewBranch">
+        <span class="icon" aria-hidden="true">${icon:plus}</span> Novo ramo
+      </button>
+    </div>
+    <div class="admin-list" id="adminBranchList"></div>
+  </div>
+
+  <!-- PLACES CARD -->
+  <div class="admin-card">
+    <div class="admin-card-head">
+      <h3><span class="icon accent" aria-hidden="true">${icon:map-pin}</span> Locais Marcantes</h3>
+      <button type="button" class="btn btn-primary btn-sm" id="btnNewPlace">
+        <span class="icon" aria-hidden="true">${icon:plus}</span> Novo local
+      </button>
+    </div>
+    <div class="admin-list" id="adminPlaceList"></div>
+  </div>
+
+  <!-- CLOUD CONFIG -->
+  <div class="admin-card cloud-card">
+    <h3><span class="icon teal" aria-hidden="true">${icon:cloud}</span> Persistência na Nuvem</h3>
+    <p class="cloud-desc">Conecte um <b>JSONBin.io</b> para que as edições fiquem globais para qualquer visitante. Crie um Bin gratuito em jsonbin.io, cole o <b>Bin ID</b> e a <b>Master Key (X-Access-Key)</b> abaixo. Sem configuração, os dados ficam salvos apenas neste navegador.</p>
+    <div class="cloud-form-grid">
+      <label class="field-label">Bin ID
+        <input type="text" id="cfgBinId" placeholder="ex: 665f0a1e...">
+      </label>
+      <label class="field-label">Master Key
+        <input type="password" id="cfgKey" placeholder="$2a$10$...">
+      </label>
+    </div>
+    <div class="cloud-actions">
+      <button type="button" class="btn btn-primary" id="btnSaveCfg">
+        <span class="icon" aria-hidden="true">${icon:save}</span> Salvar &amp; conectar
+      </button>
+      <button type="button" class="btn btn-secondary" id="btnReloadData">
+        <span class="icon" aria-hidden="true">${icon:refresh}</span> Recarregar da nuvem
+      </button>
+    </div>
+  </div>
+</main>
+
+<!-- ===================== AUTH MODAL ===================== -->
+<div class="modal-overlay hidden" id="authModal">
+  <div class="modal modal-sm" id="authModalBox">
+    <span class="modal-icon-badge"><span class="icon" aria-hidden="true">${icon:lock-keyhole}</span></span>
+    <h3 class="modal-title">Área restrita</h3>
+    <p class="modal-desc">Digite a senha da família para acessar a gestão do site.</p>
+    <input type="password" id="authInput" class="text-input" placeholder="Senha" autocomplete="off">
+    <div class="form-error hidden" id="authError"><span class="icon" aria-hidden="true">${icon:alert-circle}</span> <span id="authErrorText"></span></div>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-outline" id="btnCancelAuth">Cancelar</button>
+      <button type="button" class="btn btn-primary" id="btnSubmitAuth">Entrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== BRANCH DETAIL MODAL (public) ===================== -->
+<div class="modal-overlay hidden" id="branchModal">
+  <div class="modal modal-md" id="branchModalBox">
+    <div class="modal-header-teal">
+      <div>
+        <div class="modal-header-eyebrow">Ramo da família</div>
+        <h3 class="modal-header-title" id="branchModalName"></h3>
+      </div>
+      <button type="button" class="modal-close" id="btnCloseBranchModal" aria-label="Fechar">${icon:x}</button>
+    </div>
+    <div class="modal-body">
+      <p class="modal-story" id="branchModalStory"></p>
+      <div class="modal-subhead">Integrantes</div>
+      <div class="members-list" id="branchModalMembers"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== PLACE DETAIL MODAL (public) ===================== -->
+<div class="modal-overlay hidden" id="placeModal">
+  <div class="modal modal-md" id="placeModalBox">
+    <div class="modal-photo" id="placeModalPhoto">
+      <button type="button" class="modal-close modal-close-abs" id="btnClosePlaceModal" aria-label="Fechar">${icon:x}</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-eyebrow-inline"><span class="icon" aria-hidden="true">${icon:map-pin}</span> Local marcante</div>
+      <h3 class="modal-title-serif" id="placeModalName"></h3>
+      <p class="modal-story" id="placeModalStory"></p>
+      <div class="callout-box">
+        <div class="callout-label">Por que importa</div>
+        <p class="callout-text" id="placeModalImportance"></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== EDIT: HERO MODAL ===================== -->
+<div class="modal-overlay hidden" id="editHeroModal">
+  <div class="modal modal-lg" id="editHeroModalBox">
+    <div class="modal-form-header">
+      <h3>Editar Página Inicial</h3>
+      <button type="button" class="modal-close-light" id="btnCancelEditHero" aria-label="Fechar">${icon:x}</button>
+    </div>
+    <div class="modal-form-body">
+      <label class="field-label">Nome da família
+        <input type="text" id="editFamilyName" class="text-input">
+      </label>
+      <label class="field-label">Lema / frase de legado
+        <textarea id="editMotto" class="text-area" rows="3"></textarea>
+      </label>
+      <div>
+        <div class="subform-head">
+          <span>Marcos da linha do tempo</span>
+          <button type="button" class="btn btn-chip" id="btnAddMilestone">
+            <span class="icon" aria-hidden="true">${icon:plus}</span> Marco
+          </button>
+        </div>
+        <div class="subform-list" id="milestonesEditList"></div>
+      </div>
+    </div>
+    <div class="modal-form-footer">
+      <button type="button" class="btn btn-outline" id="btnCancelEditHero2">Cancelar</button>
+      <button type="button" class="btn btn-primary" id="btnSaveHero">
+        <span class="icon" aria-hidden="true">${icon:save}</span> Salvar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== EDIT: BRANCH MODAL ===================== -->
+<div class="modal-overlay hidden" id="editBranchModal">
+  <div class="modal modal-md" id="editBranchModalBox">
+    <div class="modal-form-header">
+      <h3 id="editBranchTitle">Novo ramo</h3>
+      <button type="button" class="modal-close-light" id="btnCancelEditBranch" aria-label="Fechar">${icon:x}</button>
+    </div>
+    <div class="modal-form-body">
+      <label class="field-label">Nome do ramo / núcleo
+        <input type="text" id="editBranchName" class="text-input" placeholder="Ex: Núcleo de São Paulo">
+      </label>
+      <label class="field-label">URL da imagem do ramo (opcional)
+        <input type="text" id="editBranchPhoto" class="text-input" placeholder="https://...">
+      </label>
+      <label class="field-label">História do ramo
+        <textarea id="editBranchStory" class="text-area" rows="3"></textarea>
+      </label>
+      <div>
+        <div class="subform-head">
+          <span>Integrantes</span>
+          <button type="button" class="btn btn-chip" id="btnAddMember">
+            <span class="icon" aria-hidden="true">${icon:user-plus}</span> Integrante
+          </button>
+        </div>
+        <div class="subform-list" id="membersEditList"></div>
+      </div>
+    </div>
+    <div class="modal-form-footer">
+      <button type="button" class="btn btn-outline" id="btnCancelEditBranch2">Cancelar</button>
+      <button type="button" class="btn btn-primary" id="btnSaveBranch">
+        <span class="icon" aria-hidden="true">${icon:save}</span> Salvar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== EDIT: PLACE MODAL ===================== -->
+<div class="modal-overlay hidden" id="editPlaceModal">
+  <div class="modal modal-md" id="editPlaceModalBox">
+    <div class="modal-form-header">
+      <h3 id="editPlaceTitle">Novo local</h3>
+      <button type="button" class="modal-close-light" id="btnCancelEditPlace" aria-label="Fechar">${icon:x}</button>
+    </div>
+    <div class="modal-form-body">
+      <label class="field-label">Nome do local
+        <input type="text" id="editPlaceName" class="text-input" placeholder="Ex: A Casa de Paraty">
+      </label>
+      <label class="field-label">URL da imagem (opcional)
+        <input type="text" id="editPlacePhoto" class="text-input" placeholder="https://...">
+      </label>
+      <label class="field-label">História do local
+        <textarea id="editPlaceStory" class="text-area" rows="3"></textarea>
+      </label>
+      <label class="field-label">Importância para as gerações
+        <textarea id="editPlaceImportance" class="text-area" rows="2"></textarea>
+      </label>
+    </div>
+    <div class="modal-form-footer">
+      <button type="button" class="btn btn-outline" id="btnCancelEditPlace2">Cancelar</button>
+      <button type="button" class="btn btn-primary" id="btnSavePlace">
+        <span class="icon" aria-hidden="true">${icon:save}</span> Salvar
+      </button>
+    </div>
+  </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
