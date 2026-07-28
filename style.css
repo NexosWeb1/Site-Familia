@@ -230,27 +230,34 @@ input, textarea, select { font-family: inherit; }
 .section-desc { max-width: 560px; margin: 0 auto; color: var(--text-muted); font-size: 16px; line-height: 1.6; }
 
 .branches-section { background: var(--cream-alt); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
-.branches-section .section-inner { padding: 60px 24px; }
+.branches-section .section-inner { padding: 60px 40px; max-width: none; }
 .places-section .section-inner { padding: 64px 24px; }
 
-/* ---------- timeline ---------- */
-.timeline-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 18px; }
-.milestone-card {
-  background: var(--card); border: 1px solid var(--border-soft); border-radius: 14px;
-  overflow: hidden; box-shadow: var(--shadow-card); display: flex; flex-direction: column;
-}
-.milestone-photo {
-  height: 130px; background-size: cover; background-position: center; position: relative;
-  border-bottom: 1px solid var(--border-soft);
-}
+/* ---------- encontros (abas + painel) ---------- */
 .no-photo-label {
   position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
   color: var(--placeholder-text); font-family: monospace; font-size: 11px; letter-spacing: 1px; text-align: center; padding: 0 8px;
+  pointer-events: none;
 }
-.milestone-body { padding: 20px; }
-.milestone-year { font-family: var(--font-serif); font-weight: 700; font-size: 28px; color: var(--gold); }
-.milestone-title { font-weight: 800; font-size: 16px; margin-top: 6px; color: var(--ink); }
-.milestone-desc { font-size: 14px; line-height: 1.6; color: var(--text-muted); margin: 9px 0 0; }
+.encontros-tabs { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 22px; }
+.encontro-tab {
+  padding: 10px 18px; border-radius: 999px; border: 1px solid var(--border-card);
+  background: var(--card); color: var(--text-muted); font-weight: 700; font-size: 13.5px; cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+.encontro-tab:hover:not(.is-active) { border-color: var(--gold); color: var(--ink); }
+.encontro-tab.is-active { background: var(--teal); border-color: var(--teal); color: var(--cream); }
+.encontro-panel-card {
+  background: var(--card); border: 1px solid var(--border-card); border-radius: 18px; overflow: hidden;
+  box-shadow: var(--shadow-card); display: flex; flex-wrap: wrap; animation: riseIn 0.25s ease;
+}
+.encontro-panel-photo { flex: 1 1 320px; min-height: 260px; background-size: cover; background-position: center; position: relative; }
+.encontro-panel-body { flex: 1 1 360px; padding: 30px; }
+.encontro-meta { display: flex; flex-wrap: wrap; gap: 8px 22px; margin-bottom: 6px; }
+.encontro-meta-item { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 700; color: var(--gold-dark); }
+.encontro-panel-title { font-family: var(--font-serif); font-weight: 600; font-size: 26px; color: var(--ink); margin: 10px 0 12px; }
+.encontro-desc { font-size: 15px; line-height: 1.7; color: var(--text); margin: 0 0 22px; }
+.encontro-album-label { color: var(--gold); font-size: 12px; font-weight: 800; letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 12px; }
 
 /* ---------- branches carousel ---------- */
 .carousel-wrap { position: relative; }
@@ -263,16 +270,16 @@ input, textarea, select { font-family: inherit; }
 .carousel-arrow-right { right: -18px; }
 .branches-grid {
   display: flex; gap: 20px; overflow-x: auto; scroll-snap-type: x mandatory;
-  padding: 6px 2px 14px; scrollbar-width: thin;
+  padding: 6px 2px 14px; scrollbar-width: thin; justify-content: center;
 }
 .branch-card {
-  scroll-snap-align: start; flex: 0 0 340px; max-width: 340px; text-align: left; cursor: pointer;
+  scroll-snap-align: start; flex: 0 0 400px; max-width: 400px; text-align: left; cursor: pointer;
   background: var(--card); border: 1px solid var(--border-card); border-radius: 16px; overflow: hidden;
   box-shadow: var(--shadow-card); display: flex; flex-direction: column;
   transition: transform 0.15s, box-shadow 0.15s;
 }
 .branch-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-card-hover); }
-.branch-photo { display: block; height: 160px; background-size: cover; background-position: center; position: relative; }
+.branch-photo { display: block; height: 200px; background-size: cover; background-position: center; position: relative; }
 .branch-badge {
   position: absolute; top: 12px; left: 12px; width: 38px; height: 38px; border-radius: 10px;
   background: var(--teal); display: flex; align-items: center; justify-content: center;
@@ -281,10 +288,14 @@ input, textarea, select { font-family: inherit; }
 .branch-body { padding: 22px; display: flex; flex-direction: column; gap: 11px; }
 .branch-name { font-family: var(--font-serif); font-weight: 600; font-size: 22px; color: var(--ink); }
 .branch-preview { font-size: 14.5px; line-height: 1.6; color: var(--text-muted); }
-.branch-count { display: inline-flex; align-items: center; gap: 8px; margin-top: 2px; color: var(--gold); font-weight: 800; font-size: 13px; }
+.branch-count {
+  display: inline-flex; align-items: center; gap: 7px; margin-top: 4px; width: fit-content;
+  padding: 6px 14px; border: 1px solid #e0d3ba; border-radius: 999px;
+  color: var(--gold); font-weight: 800; font-size: 12.5px;
+}
 
 /* ---------- places grid ---------- */
-.places-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 28px; }
+.places-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 32px; }
 .place-card {
   text-align: left; cursor: pointer; padding: 0; background: var(--card); border: 1px solid var(--border-card);
   border-radius: 20px; overflow: hidden; box-shadow: 0 3px 14px rgba(60, 45, 20, 0.06);
@@ -362,6 +373,37 @@ input, textarea, select { font-family: inherit; }
 .modal-sm { max-width: 400px; padding: 30px; border-radius: 18px; }
 .modal-md { max-width: 640px; }
 .modal-lg { max-width: 600px; }
+.modal-xl { max-width: 760px; }
+.modal-body-scroll { max-height: 72vh; overflow-y: auto; }
+
+/* ---------- branch modal: two "screens" (pessoas+fotos, depois documentos+comentários) ---------- */
+.modal-branch {
+  max-width: 880px; height: 88vh; max-height: 820px;
+  display: flex; flex-direction: column; position: relative;
+  transition: max-width 0.3s ease;
+}
+.modal-branch.is-focused { max-width: 980px; }
+.modal-branch .modal-header-teal { flex-shrink: 0; }
+.modal-branch .modal-body {
+  flex: 1; min-height: 0; overflow-y: auto;
+  padding: 28px 30px 16px;
+}
+.modal-screen-people { min-height: 100%; display: flex; flex-direction: column; padding-bottom: 30px; }
+.modal-screen-more { padding-top: 10px; padding-bottom: 6px; }
+.modal-scroll-hint {
+  position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%);
+  display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+  background: rgba(38,34,30,0.8); color: #f2e6c8; font-size: 11.5px; font-weight: 700;
+  padding: 7px 14px; border-radius: 999px; pointer-events: none; letter-spacing: 0.2px;
+  transition: opacity 0.25s ease; opacity: 1;
+}
+.modal-scroll-hint .icon { width: 13px; height: 13px; }
+.modal-scroll-hint.faded { opacity: 0; }
+
+@media (max-width: 640px) {
+  .modal-branch { height: 92vh; max-height: none; }
+  .modal-branch .modal-body { padding: 22px 20px 14px; }
+}
 
 .modal-icon-badge {
   width: 48px; height: 48px; border-radius: 12px; background: var(--cream-alt);
@@ -384,17 +426,171 @@ input, textarea, select { font-family: inherit; }
 .modal-body { padding: 26px 28px; }
 .modal-story { font-size: 15.5px; line-height: 1.7; color: var(--text); margin: 0 0 22px; }
 .modal-subhead { color: var(--gold); font-size: 12.5px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 14px; }
-
-.members-list { display: flex; flex-direction: column; gap: 14px; }
-.member-item { display: flex; gap: 15px; align-items: flex-start; }
-.member-avatar {
-  width: 56px; height: 56px; border-radius: 50%; flex-shrink: 0; background-size: cover; background-position: center;
-  display: flex; align-items: center; justify-content: center; font-family: var(--font-serif); font-weight: 700;
-  color: var(--cream); font-size: 18px; border: 2px solid var(--border-soft);
+.modal-subhead-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+.modal-subhead-row .modal-subhead { margin-bottom: 0; }
+.btn-tree-toggle {
+  display: flex; align-items: center; gap: 7px; padding: 7px 14px; border-radius: 999px;
+  background: var(--card); border: 1px solid var(--border-strong); color: var(--teal);
+  font-size: 12.5px; font-weight: 700; cursor: pointer; transition: background 0.2s ease, color 0.2s ease;
 }
-.member-name { font-weight: 800; font-size: 16px; color: var(--ink); }
-.member-role { font-size: 12.5px; font-weight: 700; color: var(--gold); text-transform: uppercase; letter-spacing: 0.4px; }
-.member-bio { font-size: 14px; line-height: 1.6; color: var(--text-muted); margin: 6px 0 0; }
+.btn-tree-toggle:hover { background: var(--cream-alt); }
+.btn-tree-toggle.is-active { background: var(--teal); color: var(--cream); border-color: var(--teal); }
+.btn-tree-toggle .icon { width: 15px; height: 15px; }
+
+/* ---------- people showcase (patriarcas / matriarcas / filhos) ---------- */
+.people-showcase { display: flex; flex-wrap: wrap; justify-content: center; gap: 28px 40px; margin-bottom: 26px; }
+.people-photos { display: flex; flex-direction: column; align-items: center; gap: 14px; flex-shrink: 0; }
+.people-photo-row { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+.people-photo {
+  border-radius: 16px; background-size: cover; background-position: center; background-color: var(--teal-dark);
+  cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  color: #f2e6c8; font-family: var(--font-serif); font-weight: 700;
+  filter: grayscale(1) brightness(0.82); opacity: 1;
+  transition: filter 0.4s ease, opacity 0.3s ease, width 0.2s ease, height 0.2s ease;
+  width: 128px; height: 140px;
+}
+.people-photo.is-active { filter: grayscale(0) brightness(1); }
+.people-photo.is-dimmed { opacity: 0.55; }
+.people-photo-fallback { font-size: 28px; }
+.people-photo-compact { width: 92px; height: 100px; }
+.people-photo-compact .people-photo-fallback { font-size: 20px; }
+.people-photo-tiny { width: 68px; height: 74px; }
+.people-photo-tiny .people-photo-fallback { font-size: 15px; }
+
+.people-list { display: flex; flex-direction: column; gap: 20px; min-width: 220px; justify-content: center; }
+.people-row { cursor: pointer; border-radius: 10px; padding: 4px 6px; margin: -4px -6px; transition: opacity 0.3s ease; }
+.people-row.is-dimmed { opacity: 0.55; }
+.people-row-head { display: flex; align-items: center; gap: 10px; }
+.people-pill { width: 16px; height: 11px; border-radius: 5px; background: var(--border-strong); flex-shrink: 0; transition: all 0.3s ease; }
+.people-row.is-active .people-pill { background: var(--teal); width: 22px; }
+.people-name { font-weight: 800; font-size: 15.5px; color: var(--ink-soft); transition: color 0.3s ease; }
+.people-row.is-active .people-name { color: var(--ink); }
+.people-dates-inline {
+  font-size: 11.5px; font-weight: 700; color: var(--gold-dark); white-space: nowrap;
+  opacity: 0; transform: translateX(-6px); transition: all 0.25s ease;
+}
+.people-row.is-active .people-dates-inline { opacity: 1; transform: translateX(0); }
+.people-role { margin: 5px 0 0; padding-left: 26px; font-size: 11px; font-weight: 800; letter-spacing: 1.2px; text-transform: uppercase; color: var(--text-faint); }
+
+@media (max-width: 640px) {
+  .people-showcase { flex-direction: column; }
+  .people-photos { order: -1; }
+}
+
+/* ---------- person spotlight (foco ao clicar) ---------- */
+.people-spotlight {
+  display: flex; gap: 22px; align-items: flex-start; flex-wrap: wrap;
+  background: var(--card-alt); border: 1px solid var(--border-soft); border-radius: 16px;
+  padding: 24px; margin-bottom: 4px; animation: riseIn 0.25s ease;
+}
+.people-spotlight-photo {
+  width: 140px; height: 150px; border-radius: 14px; background-size: cover; background-position: center;
+  background-color: var(--teal-dark); flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  color: #f2e6c8; font-family: var(--font-serif); font-weight: 700; font-size: 36px;
+}
+.people-spotlight-info { flex: 1; min-width: 220px; }
+.people-spotlight-back {
+  display: inline-flex; align-items: center; gap: 6px; background: none; border: none; cursor: pointer;
+  color: var(--teal); font-weight: 700; font-size: 12.5px; padding: 0; margin: 0 0 12px;
+}
+.people-spotlight-back .icon { width: 14px; height: 14px; }
+.people-spotlight-back:hover { color: var(--gold); }
+.people-spotlight-name { font-family: var(--font-serif); font-weight: 600; font-size: 25px; color: var(--ink); }
+.people-spotlight-role { font-size: 12px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: var(--gold); margin-top: 5px; }
+.people-spotlight-dates { font-size: 12.5px; font-weight: 700; color: var(--text-faint); margin-top: 5px; }
+.people-spotlight-bio { font-size: 14.5px; line-height: 1.65; color: var(--text); margin: 13px 0 0; }
+
+.spotlight-family { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border-soft); }
+.spotlight-family-label { color: var(--gold); font-size: 12px; font-weight: 800; letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 12px; }
+.spotlight-family-showcase { margin-bottom: 0; justify-content: flex-start; }
+
+/* ---------- visão geral da família (árvore: casais lado a lado, filhos embaixo) ---------- */
+.family-tree { margin-bottom: 26px; }
+.family-tree-inner { display: flex; flex-direction: column; align-items: center; }
+
+.tree-generation { display: flex; justify-content: center; }
+.tree-generation-children { flex-wrap: wrap; gap: 32px; align-items: flex-start; }
+
+.tree-connector { width: 2px; height: 22px; background: var(--border-strong); }
+.tree-connector-sm { height: 16px; margin: 0 auto; }
+
+.tree-unit { display: flex; flex-direction: column; align-items: center; }
+
+.tree-couple { display: flex; align-items: center; gap: 10px; }
+.tree-couple-link { width: 18px; height: 2px; background: var(--border-strong); flex-shrink: 0; margin-top: -26px; }
+.tree-couple-single { justify-content: center; }
+
+.tree-person { display: flex; flex-direction: column; align-items: center; text-align: center; width: 92px; }
+.tree-person-photo {
+  width: 84px; height: 92px; border-radius: 14px; background-size: cover; background-position: center;
+  background-color: var(--teal-dark); display: flex; align-items: center; justify-content: center;
+  color: #f2e6c8; font-family: var(--font-serif); font-weight: 700; font-size: 22px; margin-bottom: 8px;
+}
+.tree-person-fallback { font-size: 22px; }
+.tree-person-name { font-weight: 800; font-size: 13px; color: var(--ink); line-height: 1.25; }
+.tree-person-role { font-size: 9.5px; font-weight: 800; letter-spacing: 0.6px; text-transform: uppercase; color: var(--text-faint); margin-top: 2px; }
+
+.tree-grandkids { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; }
+.tree-grandkids .tree-person { width: 68px; }
+.tree-grandkids .tree-person-photo { width: 60px; height: 66px; border-radius: 10px; font-size: 16px; margin-bottom: 6px; }
+.tree-grandkids .tree-person-fallback { font-size: 16px; }
+.tree-grandkids .tree-person-name { font-size: 11.5px; }
+
+@media (max-width: 560px) {
+  .people-spotlight { flex-direction: column; align-items: flex-start; }
+}
+
+/* ---------- galleries ---------- */
+.photo-gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px; margin-bottom: 26px; }
+.gallery-item { display: flex; flex-direction: column; gap: 5px; }
+.gallery-photo { display: block; width: 100%; aspect-ratio: 1 / 1; border-radius: 10px; background-size: cover; background-position: center; border: 1px solid var(--border-soft); }
+.gallery-caption { font-size: 11.5px; color: var(--text-faint); line-height: 1.4; }
+
+/* ---------- documents ---------- */
+.documents-list { display: flex; flex-direction: column; gap: 9px; margin-bottom: 26px; }
+.document-item {
+  display: flex; align-items: center; gap: 10px; padding: 12px 15px; border: 1px solid var(--border-soft);
+  border-radius: 10px; background: var(--card-alt); font-weight: 700; font-size: 13.5px; color: var(--teal);
+}
+.document-item:hover { background: var(--cream-alt); }
+
+/* ---------- comments ---------- */
+.comments-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; }
+.comment-item { padding: 13px 15px; border-radius: 10px; background: var(--card-alt); border: 1px solid var(--border-soft); }
+.comment-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 4px; }
+.comment-name { font-weight: 800; font-size: 13.5px; color: var(--ink); }
+.comment-date { font-size: 11.5px; color: var(--text-faint); }
+.comment-text { font-size: 14px; line-height: 1.55; color: var(--text); margin: 0; }
+.comment-form { display: flex; flex-direction: column; gap: 10px; }
+.comment-form .btn { align-self: flex-start; }
+
+/* ---------- family union block ---------- */
+.union-block {
+  display: flex; gap: 24px; align-items: center; flex-wrap: wrap;
+  background: var(--card); border: 1px solid var(--border-card); border-radius: 18px;
+  padding: 26px; margin: 34px auto 0; max-width: 1140px; box-shadow: var(--shadow-card);
+}
+.union-photos { display: grid; grid-template-columns: repeat(2, 90px); grid-template-rows: repeat(2, 90px); gap: 8px; flex-shrink: 0; }
+.union-photo-thumb { border-radius: 10px; background-size: cover; background-position: center; border: 1px solid var(--border-soft); }
+.union-photo-thumb.placeholder {
+  display: flex; align-items: center; justify-content: center; color: var(--placeholder-text);
+  background: var(--cream-alt); grid-column: 1 / 3; grid-row: 1 / 3; width: 100%; height: 100%;
+}
+.union-text { flex: 1; min-width: 240px; }
+.union-label { display: inline-flex; align-items: center; gap: 7px; color: var(--gold); font-weight: 800; font-size: 12.5px; letter-spacing: 0.6px; text-transform: uppercase; margin-bottom: 8px; }
+.union-story { font-size: 15px; line-height: 1.65; color: var(--text); margin: 0 0 14px; }
+
+/* ---------- parent fieldsets (admin) ---------- */
+.parents-edit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 640px) { .parents-edit-grid { grid-template-columns: 1fr; } }
+.parent-fieldset {
+  border: 1px solid var(--border-soft); border-radius: 11px; padding: 12px; margin: 0;
+  display: flex; flex-direction: column; gap: 8px; background: var(--card-alt);
+}
+.parent-fieldset legend {
+  font-size: 12px; font-weight: 800; color: var(--gold-dark); text-transform: uppercase; letter-spacing: 0.5px; padding: 0 4px;
+}
+.parent-fieldset .text-input, .parent-fieldset .text-area { padding: 9px 11px; border-radius: 8px; font-size: 14px; }
 
 .modal-photo { height: 230px; background-size: cover; background-position: center; position: relative; }
 .modal-title-serif { font-family: var(--font-serif); font-weight: 600; font-size: 28px; color: var(--ink); margin: 8px 0 14px; }
@@ -424,10 +620,14 @@ input, textarea, select { font-family: inherit; }
 }
 .subform-item-fields { flex: 1; display: flex; flex-direction: column; gap: 8px; }
 .subform-item-row { display: flex; gap: 8px; }
+.subform-subhead {
+  font-size: 11px; font-weight: 800; letter-spacing: 0.6px; text-transform: uppercase;
+  color: var(--gold-dark); margin-top: 4px; padding-top: 8px; border-top: 1px dashed var(--border-soft);
+}
 .subform-item .text-input, .subform-item .text-area {
   padding: 9px 11px; border-radius: 8px; font-size: 14px;
 }
-.milestone-year-input { width: 90px; font-weight: 700; color: var(--gold) !important; flex: none !important; }
+.encontro-date-input { width: 170px; font-weight: 700; color: var(--gold) !important; flex: none !important; }
 .photo-url-input { color: var(--teal) !important; font-size: 13.5px !important; }
 
 /* ---------- responsive ---------- */
