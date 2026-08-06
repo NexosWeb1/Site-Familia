@@ -30,22 +30,22 @@
         <span class="brand-name">Memórias &amp; Legado</span>
       </div>
       <nav class="main-nav">
+        <a href="#historia">História</a>
         <a href="#ramos">Árvore Genealógica</a>
         <a href="#linha">Linha do Tempo</a>
         <a href="#locais">Locais</a>
-        <button type="button" class="btn btn-outline btn-admin-nav" id="btnGoAdmin">
-          <span class="icon" aria-hidden="true">${icon:lock}</span> Área do Administrador
-        </button>
+        <a href="#origens">Origens</a>
+        <a href="#memorias">Memórias</a>
       </nav>
       <button type="button" class="mobile-menu-btn" id="btnMobileMenu" aria-label="Abrir menu">${icon:menu}</button>
     </div>
     <nav class="mobile-nav" id="mobileNav">
+      <a href="#historia">História</a>
       <a href="#ramos">Árvore Genealógica</a>
       <a href="#linha">Linha do Tempo</a>
       <a href="#locais">Locais</a>
-      <button type="button" class="btn btn-outline btn-admin-nav" id="btnGoAdminMobile">
-        <span class="icon" aria-hidden="true">${icon:lock}</span> Área do Administrador
-      </button>
+      <a href="#origens">Origens</a>
+      <a href="#memorias">Memórias</a>
     </nav>
   </header>
 
@@ -66,12 +66,23 @@
       </div>
     </section>
 
+    <!-- HISTÓRIA DA FAMÍLIA -->
+    <section class="section history-section" id="historia">
+      <div class="section-inner">
+        <div class="section-head section-head-center">
+          <span class="eyebrow">Nossa História</span>
+          <h2 class="section-title">História da Família</h2>
+        </div>
+        <p class="history-text" id="historyText"></p>
+      </div>
+    </section>
+
     <!-- BRANCHES / ÁRVORE GENEALÓGICA -->
     <section class="section branches-section" id="ramos">
       <div class="section-inner">
         <div class="section-head section-head-center">
-          <span class="eyebrow">Árvore Genealógica</span>
-          <h2 class="section-title">Ramos &amp; Núcleos</h2>
+          <span class="eyebrow">Linhagens da Família</span>
+          <h2 class="section-title">Árvore Genealógica</h2>
           <p class="section-desc">Cada ramo carrega seus patriarcas, matriarcas, filhos e sua própria história. Toque
             para conhecer os integrantes, fotos, documentos e memórias de cada linhagem.</p>
         </div>
@@ -124,6 +135,33 @@
       </div>
     </section>
 
+    <!-- ORIGINS / PAÍSES DE ORIGEM DOS ANCESTRAIS -->
+    <section class="section origins-section" id="origens">
+      <div class="section-inner">
+        <div class="section-head section-head-center">
+          <span class="eyebrow">Raízes</span>
+          <h2 class="section-title">Países de Origem dos Ancestrais</h2>
+          <p class="section-desc">De onde vieram os primeiros ancestrais e como suas origens moldaram a história da
+            família.</p>
+        </div>
+        <div class="encontros-tabs" id="originsTabs"></div>
+        <div class="encontros-panel" id="originsPanel"></div>
+      </div>
+    </section>
+
+    <!-- MEMÓRIAS (galeria de fotos/documentos publicados pelo admin) -->
+    <section class="section memorias-section" id="memorias">
+      <div class="section-inner">
+        <div class="section-head section-head-center">
+          <span class="eyebrow">Acervo Vivo</span>
+          <h2 class="section-title">Memórias</h2>
+          <p class="section-desc">Fotos e documentos publicados pela família — a lista cresce em tempo real conforme
+            novas memórias são adicionadas.</p>
+        </div>
+        <div class="memorias-grid" id="memoriasGrid"></div>
+      </div>
+    </section>
+
     <!-- FOOTER -->
     <footer class="site-footer">
       <div class="footer-inner">
@@ -134,9 +172,7 @@
             <div class="footer-tag">Um arquivo vivo de memórias e histórias.</div>
           </div>
         </div>
-        <button type="button" class="btn btn-ghost" id="btnGoAdminFooter">
-          <span class="icon" aria-hidden="true">${icon:settings}</span> Área de Gestão / Admin
-        </button>
+        <button type="button" class="footer-admin-link" id="btnGoAdminFooter">Acesso administrativo</button>
       </div>
     </footer>
   </main>
@@ -147,12 +183,17 @@
       <button type="button" class="btn btn-outline" id="btnGoPublic">
         <span class="icon" aria-hidden="true">${icon:arrow-left}</span> Voltar ao site
       </button>
-      <span class="sync-label" id="syncLabel"></span>
+      <div class="admin-topbar-right">
+        <span class="sync-label" id="syncLabel"></span>
+        <button type="button" class="btn btn-ghost-light" id="btnLogout">
+          <span class="icon" aria-hidden="true">${icon:log-out}</span> Sair
+        </button>
+      </div>
     </div>
 
     <h1 class="admin-title">Painel de Gestão</h1>
-    <p class="admin-subtitle">Edite os conteúdos do site. As alterações são salvas na nuvem (quando configurada) e ficam
-      visíveis para todos os visitantes.</p>
+    <p class="admin-subtitle">Edite os conteúdos do site. As alterações são salvas direto no banco de dados (Supabase) e
+      ficam visíveis para todos os visitantes.</p>
 
     <!-- HERO CARD -->
     <div class="admin-card">
@@ -163,6 +204,17 @@
         </button>
       </div>
       <div class="admin-card-summary" id="heroSummary"></div>
+    </div>
+
+    <!-- HISTORY CARD -->
+    <div class="admin-card">
+      <div class="admin-card-head">
+        <h3><span class="icon accent" aria-hidden="true">${icon:file-text}</span> História da Família</h3>
+        <button type="button" class="btn btn-primary btn-sm" id="btnEditHistory">
+          <span class="icon" aria-hidden="true">${icon:pencil}</span> Editar
+        </button>
+      </div>
+      <div class="admin-card-summary" id="historySummary"></div>
     </div>
 
     <!-- BRANCHES CARD -->
@@ -198,28 +250,41 @@
       <div class="admin-list" id="adminPlaceList"></div>
     </div>
 
-    <!-- CLOUD CONFIG -->
-    <div class="admin-card cloud-card">
-      <h3><span class="icon teal" aria-hidden="true">${icon:cloud}</span> Persistência na Nuvem</h3>
-      <p class="cloud-desc">Conecte um <b>JSONBin.io</b> para que as edições fiquem globais para qualquer visitante.
-        Crie um Bin gratuito em jsonbin.io, cole o <b>Bin ID</b> e a <b>Master Key (X-Access-Key)</b> abaixo. Sem
-        configuração, os dados ficam salvos apenas neste navegador.</p>
-      <div class="cloud-form-grid">
-        <label class="field-label">Bin ID
-          <input type="text" id="cfgBinId" placeholder="ex: 665f0a1e...">
-        </label>
-        <label class="field-label">Master Key
-          <input type="password" id="cfgKey" placeholder="$2a$10$...">
-        </label>
-      </div>
-      <div class="cloud-actions">
-        <button type="button" class="btn btn-primary" id="btnSaveCfg">
-          <span class="icon" aria-hidden="true">${icon:save}</span> Salvar &amp; conectar
-        </button>
-        <button type="button" class="btn btn-secondary" id="btnReloadData">
-          <span class="icon" aria-hidden="true">${icon:refresh}</span> Recarregar da nuvem
+    <!-- ORIGINS CARD -->
+    <div class="admin-card">
+      <div class="admin-card-head">
+        <h3><span class="icon accent" aria-hidden="true">${icon:map-pin}</span> Países de Origem dos Ancestrais</h3>
+        <button type="button" class="btn btn-primary btn-sm" id="btnNewOrigin">
+          <span class="icon" aria-hidden="true">${icon:plus}</span> Novo país
         </button>
       </div>
+      <div class="admin-list" id="adminOriginList"></div>
+    </div>
+
+    <!-- MEMÓRIAS CARD -->
+    <div class="admin-card">
+      <div class="admin-card-head">
+        <h3><span class="icon accent" aria-hidden="true">${icon:image}</span> Memórias</h3>
+      </div>
+      <form id="memoriaForm" class="memoria-form">
+        <label class="field-label">Título
+          <input type="text" id="memoriaTitulo" class="text-input" placeholder="Ex: Aniversário de 80 anos da vovó" required>
+        </label>
+        <label class="field-label">Descrição (opcional)
+          <textarea id="memoriaDescricao" class="text-area" rows="2" placeholder="Um pouco de contexto sobre essa memória…"></textarea>
+        </label>
+        <label class="field-label">Foto ou documento (PDF)
+          <input type="file" id="memoriaFile" accept="image/*,application/pdf" required>
+        </label>
+        <div class="upload-progress hidden" id="memoriaProgressWrap">
+          <div class="upload-progress-track"><div class="upload-progress-bar" id="memoriaProgressBar"></div></div>
+          <span class="upload-progress-label" id="memoriaProgressLabel"></span>
+        </div>
+        <button type="submit" class="btn btn-primary" id="btnSubmitMemoria">
+          <span class="icon" aria-hidden="true">${icon:upload}</span> Publicar memória
+        </button>
+      </form>
+      <div class="admin-list admin-list-spaced" id="adminMemoriasList"></div>
     </div>
   </main>
 
@@ -228,8 +293,11 @@
     <div class="modal modal-sm" id="authModalBox">
       <span class="modal-icon-badge"><span class="icon" aria-hidden="true">${icon:lock-keyhole}</span></span>
       <h3 class="modal-title">Área restrita</h3>
-      <p class="modal-desc">Digite a senha da família para acessar a gestão do site.</p>
-      <input type="password" id="authInput" class="text-input" placeholder="Senha" autocomplete="off">
+      <p class="modal-desc">Entre com a conta de administração para acessar a gestão do site.</p>
+      <div class="auth-fields">
+        <input type="email" id="authEmail" class="text-input" placeholder="E-mail" autocomplete="username">
+        <input type="password" id="authPassword" class="text-input" placeholder="Senha" autocomplete="current-password">
+      </div>
       <div class="form-error hidden" id="authError"><span class="icon" aria-hidden="true">${icon:alert-circle}</span>
         <span id="authErrorText"></span></div>
       <div class="modal-actions">
@@ -335,6 +403,25 @@
         <label class="field-label">Lema / frase de legado
           <textarea id="editMotto" class="text-area" rows="3"></textarea>
         </label>
+        <div class="field-label">
+          <span>Foto de capa (plano de fundo em tela cheia)</span>
+          <div class="photo-picker">
+            <span class="photo-picker-preview" id="editHeroPhotoPreview"></span>
+            <div class="photo-picker-actions">
+              <label class="btn btn-chip">
+                <span class="icon" aria-hidden="true">${icon:upload}</span> Escolher foto
+                <input type="file" accept="image/*" class="visually-hidden-file" id="editHeroPhotoFile">
+              </label>
+              <button type="button" class="btn-danger-icon hidden" id="editHeroPhotoRemove" title="Remover foto">
+                <span class="icon" aria-hidden="true">${icon:trash-2}</span>
+              </button>
+            </div>
+          </div>
+          <div class="upload-progress hidden" id="editHeroPhotoProgress">
+            <div class="upload-progress-track"><div class="upload-progress-bar" id="editHeroPhotoProgressBar"></div></div>
+            <span class="upload-progress-label" id="editHeroPhotoProgressLabel"></span>
+          </div>
+        </div>
         <div>
           <div class="subform-head">
             <span>Encontros da família</span>
@@ -365,9 +452,25 @@
         <label class="field-label">Nome do ramo / núcleo
           <input type="text" id="editBranchName" class="text-input" placeholder="Ex: Os Arruda">
         </label>
-        <label class="field-label">URL da imagem de capa do ramo (opcional)
-          <input type="text" id="editBranchPhoto" class="text-input" placeholder="https://...">
-        </label>
+        <div class="field-label">
+          <span>Foto de capa do ramo (opcional)</span>
+          <div class="photo-picker">
+            <span class="photo-picker-preview" id="editBranchPhotoPreview"></span>
+            <div class="photo-picker-actions">
+              <label class="btn btn-chip">
+                <span class="icon" aria-hidden="true">${icon:upload}</span> Escolher foto
+                <input type="file" accept="image/*" class="visually-hidden-file" id="editBranchPhotoFile">
+              </label>
+              <button type="button" class="btn-danger-icon hidden" id="editBranchPhotoRemove" title="Remover foto">
+                <span class="icon" aria-hidden="true">${icon:trash-2}</span>
+              </button>
+            </div>
+          </div>
+          <div class="upload-progress hidden" id="editBranchPhotoProgress">
+            <div class="upload-progress-track"><div class="upload-progress-bar" id="editBranchPhotoProgressBar"></div></div>
+            <span class="upload-progress-label" id="editBranchPhotoProgressLabel"></span>
+          </div>
+        </div>
         <label class="field-label">História do ramo
           <textarea id="editBranchStory" class="text-area" rows="3"></textarea>
         </label>
@@ -376,8 +479,17 @@
           <fieldset class="parent-fieldset">
             <legend>Patriarca (Pai)</legend>
             <input type="text" id="editFatherName" class="text-input" placeholder="Nome">
-            <input type="text" id="editFatherPhoto" class="text-input photo-url-input"
-              placeholder="URL da foto (opcional)">
+            <div class="photo-row">
+              <span class="photo-row-preview" id="editFatherPhotoPreview"></span>
+              <label class="btn btn-chip">
+                <span class="icon" aria-hidden="true">${icon:upload}</span> Foto (opcional)
+                <input type="file" accept="image/*" class="visually-hidden-file" id="editFatherPhotoFile">
+              </label>
+              <button type="button" class="btn-danger-icon hidden" id="editFatherPhotoRemove" title="Remover foto">
+                <span class="icon" aria-hidden="true">${icon:trash-2}</span>
+              </button>
+              <span class="photo-row-status" id="editFatherPhotoStatus"></span>
+            </div>
             <div class="subform-item-row">
               <input type="text" id="editFatherBirth" class="text-input" placeholder="Nascimento">
               <input type="text" id="editFatherDeath" class="text-input" placeholder="Falecimento (opcional)">
@@ -387,8 +499,17 @@
           <fieldset class="parent-fieldset">
             <legend>Matriarca (Mãe)</legend>
             <input type="text" id="editMotherName" class="text-input" placeholder="Nome">
-            <input type="text" id="editMotherPhoto" class="text-input photo-url-input"
-              placeholder="URL da foto (opcional)">
+            <div class="photo-row">
+              <span class="photo-row-preview" id="editMotherPhotoPreview"></span>
+              <label class="btn btn-chip">
+                <span class="icon" aria-hidden="true">${icon:upload}</span> Foto (opcional)
+                <input type="file" accept="image/*" class="visually-hidden-file" id="editMotherPhotoFile">
+              </label>
+              <button type="button" class="btn-danger-icon hidden" id="editMotherPhotoRemove" title="Remover foto">
+                <span class="icon" aria-hidden="true">${icon:trash-2}</span>
+              </button>
+              <span class="photo-row-status" id="editMotherPhotoStatus"></span>
+            </div>
             <div class="subform-item-row">
               <input type="text" id="editMotherBirth" class="text-input" placeholder="Nascimento">
               <input type="text" id="editMotherDeath" class="text-input" placeholder="Falecimento (opcional)">
@@ -425,6 +546,13 @@
             </button>
           </div>
           <div class="subform-list" id="documentsEditList"></div>
+        </div>
+
+        <div>
+          <div class="subform-head">
+            <span>Comentários e memórias</span>
+          </div>
+          <div class="subform-list" id="commentsEditList"></div>
         </div>
       </div>
       <div class="modal-form-footer">
@@ -466,6 +594,29 @@
     </div>
   </div>
 
+  <!-- ===================== EDIT: HISTORY MODAL ===================== -->
+  <div class="modal-overlay hidden" id="editHistoryModal">
+    <div class="modal modal-lg" id="editHistoryModalBox">
+      <div class="modal-form-header">
+        <h3>Editar História da Família</h3>
+        <button type="button" class="modal-close-light" id="btnCancelEditHistory"
+          aria-label="Fechar">${icon:x}</button>
+      </div>
+      <div class="modal-form-body">
+        <label class="field-label">Texto descritivo (história e ligação entre as famílias)
+          <textarea id="editHistoryText" class="text-area" rows="12"
+            placeholder="Conte a história e a ligação entre as famílias Arruda, Pinto e Leda…"></textarea>
+        </label>
+      </div>
+      <div class="modal-form-footer">
+        <button type="button" class="btn btn-outline" id="btnCancelEditHistory2">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="btnSaveHistory">
+          <span class="icon" aria-hidden="true">${icon:save}</span> Salvar
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- ===================== EDIT: PLACE MODAL ===================== -->
   <div class="modal-overlay hidden" id="editPlaceModal">
     <div class="modal modal-md" id="editPlaceModalBox">
@@ -477,9 +628,25 @@
         <label class="field-label">Nome do local
           <input type="text" id="editPlaceName" class="text-input" placeholder="Ex: A Casa de Paraty">
         </label>
-        <label class="field-label">URL da imagem (opcional)
-          <input type="text" id="editPlacePhoto" class="text-input" placeholder="https://...">
-        </label>
+        <div class="field-label">
+          <span>Foto do local (opcional)</span>
+          <div class="photo-picker">
+            <span class="photo-picker-preview" id="editPlacePhotoPreview"></span>
+            <div class="photo-picker-actions">
+              <label class="btn btn-chip">
+                <span class="icon" aria-hidden="true">${icon:upload}</span> Escolher foto
+                <input type="file" accept="image/*" class="visually-hidden-file" id="editPlacePhotoFile">
+              </label>
+              <button type="button" class="btn-danger-icon hidden" id="editPlacePhotoRemove" title="Remover foto">
+                <span class="icon" aria-hidden="true">${icon:trash-2}</span>
+              </button>
+            </div>
+          </div>
+          <div class="upload-progress hidden" id="editPlacePhotoProgress">
+            <div class="upload-progress-track"><div class="upload-progress-bar" id="editPlacePhotoProgressBar"></div></div>
+            <span class="upload-progress-label" id="editPlacePhotoProgressLabel"></span>
+          </div>
+        </div>
         <label class="field-label">História do local
           <textarea id="editPlaceStory" class="text-area" rows="3"></textarea>
         </label>
@@ -496,7 +663,88 @@
     </div>
   </div>
 
-  <script src="script.js"></script>
+  <!-- ===================== EDIT: ORIGIN MODAL ===================== -->
+  <div class="modal-overlay hidden" id="editOriginModal">
+    <div class="modal modal-md" id="editOriginModalBox">
+      <div class="modal-form-header">
+        <h3 id="editOriginTitle">Novo país de origem</h3>
+        <button type="button" class="modal-close-light" id="btnCancelEditOrigin" aria-label="Fechar">${icon:x}</button>
+      </div>
+      <div class="modal-form-body">
+        <label class="field-label">Bandeira
+          <select id="editOriginFlag" class="text-input">
+            <option value="">Selecione o país…</option>
+            <option value="https://flagcdn.com/pt.svg">Portugal</option>
+            <option value="https://flagcdn.com/es.svg">Espanha</option>
+            <option value="https://flagcdn.com/it.svg">Itália</option>
+            <option value="https://flagcdn.com/de.svg">Alemanha</option>
+            <option value="https://flagcdn.com/fr.svg">França</option>
+            <option value="https://flagcdn.com/gb.svg">Reino Unido</option>
+            <option value="https://flagcdn.com/ie.svg">Irlanda</option>
+            <option value="https://flagcdn.com/nl.svg">Holanda</option>
+            <option value="https://flagcdn.com/ch.svg">Suíça</option>
+            <option value="https://flagcdn.com/pl.svg">Polônia</option>
+            <option value="https://flagcdn.com/ru.svg">Rússia</option>
+            <option value="https://flagcdn.com/ua.svg">Ucrânia</option>
+            <option value="https://flagcdn.com/gr.svg">Grécia</option>
+            <option value="https://flagcdn.com/lb.svg">Líbano</option>
+            <option value="https://flagcdn.com/sy.svg">Síria</option>
+            <option value="https://flagcdn.com/jp.svg">Japão</option>
+            <option value="https://flagcdn.com/cn.svg">China</option>
+            <option value="https://flagcdn.com/ao.svg">Angola</option>
+            <option value="https://flagcdn.com/mz.svg">Moçambique</option>
+            <option value="https://flagcdn.com/cv.svg">Cabo Verde</option>
+            <option value="https://flagcdn.com/gw.svg">Guiné-Bissau</option>
+            <option value="https://flagcdn.com/za.svg">África do Sul</option>
+            <option value="https://flagcdn.com/ma.svg">Marrocos</option>
+            <option value="https://flagcdn.com/in.svg">Índia</option>
+            <option value="https://flagcdn.com/br.svg">Brasil</option>
+            <option value="https://flagcdn.com/ar.svg">Argentina</option>
+            <option value="https://flagcdn.com/uy.svg">Uruguai</option>
+            <option value="https://flagcdn.com/py.svg">Paraguai</option>
+            <option value="https://flagcdn.com/bo.svg">Bolívia</option>
+            <option value="https://flagcdn.com/cl.svg">Chile</option>
+            <option value="https://flagcdn.com/us.svg">Estados Unidos</option>
+            <option value="https://flagcdn.com/ca.svg">Canadá</option>
+            <option value="https://flagcdn.com/mx.svg">México</option>
+          </select>
+        </label>
+        <label class="field-label">País / região de origem
+          <input type="text" id="editOriginName" class="text-input" placeholder="Ex: Ilha dos Açores, Portugal">
+        </label>
+        <div class="field-label">
+          <span>Foto do local (opcional — se vazio, a bandeira aparece em destaque)</span>
+          <div class="photo-picker">
+            <span class="photo-picker-preview" id="editOriginPhotoPreview"></span>
+            <div class="photo-picker-actions">
+              <label class="btn btn-chip">
+                <span class="icon" aria-hidden="true">${icon:upload}</span> Escolher foto
+                <input type="file" accept="image/*" class="visually-hidden-file" id="editOriginPhotoFile">
+              </label>
+              <button type="button" class="btn-danger-icon hidden" id="editOriginPhotoRemove" title="Remover foto">
+                <span class="icon" aria-hidden="true">${icon:trash-2}</span>
+              </button>
+            </div>
+          </div>
+          <div class="upload-progress hidden" id="editOriginPhotoProgress">
+            <div class="upload-progress-track"><div class="upload-progress-bar" id="editOriginPhotoProgressBar"></div></div>
+            <span class="upload-progress-label" id="editOriginPhotoProgressLabel"></span>
+          </div>
+        </div>
+        <label class="field-label">Descritivo histórico da descendência
+          <textarea id="editOriginStory" class="text-area" rows="4"></textarea>
+        </label>
+      </div>
+      <div class="modal-form-footer">
+        <button type="button" class="btn btn-outline" id="btnCancelEditOrigin2">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="btnSaveOrigin">
+          <span class="icon" aria-hidden="true">${icon:save}</span> Salvar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
 </body>
 
 </html>

@@ -1,87 +1,293 @@
 # Site-Familia
 
-A single-page family memory/genealogy site. Static HTML + CSS + vanilla JS —
-no build step, no framework, no package.json. Just open `index.html` or
-serve the folder (`python -m http.server`).
+A family memory/genealogy site. Vite + vanilla JS (ES modules) on the
+front end, Supabase (Postgres + Auth + Storage) as the only backend — no
+custom server code anywhere in this repo.
+
+## Running it
+
+```
+npm install
+cp .env.example .env   # fill in VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY
+npm run dev             # local dev server
+npm run build            # production build -> dist/
+```
+
+There's no `.env` checked in (see `.gitignore`) — without it,
+`src/supabaseClient.js` throws a clear, fail-fast error at module load
+instead of the app silently breaking later. See the bottom of this file
+for the one-time Supabase dashboard setup (SQL, bucket, admin login).
+
+No test suite, no linter config, no CI. Verification during development
+has been manual: run the dev server and drive it with Playwright (installed
+ad hoc in a scratch dir, not a project dependency) to screenshot + check
+console errors. There is no `npm test` or similar — don't invent one
+unprompted.
 
 ## Files
 
 - `index.html` — all markup: public view, admin view, and every modal (they
-  all live in the DOM at once, toggled via a `hidden` class).
+  all live in the DOM at once, toggled via a `hidden` class). Loads
+  `src/main.js` as an ES module (`<script type="module" src="/src/main.js">`).
 - `style.css` — all styling. CSS custom properties for theme colors are
   defined once in `:root` (`--teal`, `--gold`, `--cream`, etc.).
-- `script.js` — all behavior. One file, organized into numbered sections
-  (see the `/* --- N. SECTION --- */` comments inside it). Read this file
-  top to bottom before making changes; there's no module system to grep
-  around.
+- `src/main.js` — all UI behavior (rendering, event wiring, admin forms).
+  One file, organized into numbered sections (see the
+  `/* --- N. SECTION --- */` comments inside it). It never talks to
+  Supabase directly — everything goes through `src/api.js`.
+- `src/api.js` — the entire data layer. Every read/write to Postgres,
+  every Storage upload, every Auth call lives here, and it translates
+  between the DB's `snake_case` column names and the `camelCase` shape
+  `main.js` has always used (`mapHeroRow`, `branchToRow`-style helpers at
+  the top of the file). If you're looking for "where does X get
+  saved/loaded", this is the file, not `main.js`.
+- `src/supabaseClient.js` — creates the one shared Supabase client from
+  `import.meta.env.VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY`. Throws
+  immediately if either is missing — don't remove that guard, it's the
+  difference between a clear error and a confusing blank page.
+- `supabase/schema.sql` — the entire DB schema: tables, Row Level
+  Security policies, and the `memorias` and `fotos` Storage buckets.
+  Paste-and-run in the Supabase SQL Editor (idempotent — safe to
+  re-run). This is the source of truth for the schema; there are no
+  migration files, just this one script.
+- `.env.example` — documents the two required env vars. Copy to `.env`
+  (gitignored) and fill in real values per-deployment.
 
-No test suite, no linter config, no CI. Verification during development
-has been manual: serve the folder and drive it with Playwright (installed ad hoc
-in a scratch dir, not a project dependency) to screenshot + check console
-errors. There is no `npm test` or similar — don't invent one unprompted.
+## Data model
 
-## Data model (`script.js`, section 1)
+Each public section of the site is one Supabase table (see
+`supabase/schema.sql` for exact columns/types). Nested lists that only
+make sense inside their "owner" (a branch's photos, a branch's children,
+an encontro's photo album, ...) are stored as `jsonb` columns rather than
+normalized into their own tables — it's the same shape `main.js` has
+always used in memory, so `src/api.js` can read/write most of an entity in
+one round trip instead of assembling it from several joins. The one
+deliberate exception is `branch_comments` (see "Comments" below), which
+needs its own table because it has different write permissions than the
+rest of a branch.
 
-`state.data` (see `defaultData()` / `normalizeData()`) has four top-level
-keys, all persisted together as one JSON blob:
+Every `photo_url`/`photo` column below is a public URL into the `fotos`
+Storage bucket, filled in by the admin picking a file from their computer
+(see "Photo fields" below) — not a pasted external link. `documents` (on
+`branches`) follows the same upload convention, just for PDFs instead of
+images (`accept="application/pdf,.pdf"` on its file input) — see "Photo
+fields" below, `renderDocumentsEditList()` in `src/main.js`.
 
-- `hero` — `familyName`, `motto`, `encontros[]` (`id`, `title`, `date`, `local`,
-  `photo` cover, `photos[]` album, `desc`) for the "Marcos que nos moldaram"
-  section — each entry is a family gathering/reunion record. Rendered as 3
-  navigable tabs (`renderEncontros()`/`renderEncontroPanel()`, `.encontro-tab`/
-  `.encontro-panel-card`) instead of a static grid: clicking a tab swaps the
-  panel below (photo, date, local, description, photo album via the shared
-  `galleryHtml()` helper). `state.activeEncontroIndex` tracks the open tab. In
-  the admin editor, each encontro's album is edited as a textarea of photo
-  URLs (one per line, `data-field="photosText"`), parsed into `photos[]` on
-  input — simpler than a nested subform-list for a second-level array.
-- `branches[]` — one entry per family branch (currently Arruda/Pinto/Leda).
-  Each branch has:
-  - `name`, `photo` (cover image), `story` (short branch history)
-  - `father`, `mother` — each `{ name, photo, birth, death, bio }`
-    (patriarch/matriarch; `normalizeBranch()` fills in a blank `defaultPerson()`
-    if absent — a branch can have only a mother, only a father, or both)
-  - `children[]` — same person shape as father/mother, plus two optional
-    fields normalized by `normalizeChild()`: `spouse` (single person object
-    or `null`) and `children[]` (grandchildren, same basic person shape, not
-    recursive further — grandchildren don't get their own spouse/children).
-    In the public "Pessoas da Família" spotlight, clicking a child shows a
-    "Família" section (`familyHtml()`) with the spouse/grandkids if present.
-    In the admin children editor, spouse is 4 plain fields; grandchildren are
-    a textarea, one per line as `Nome | Nascimento | Falecimento`
-    (`data-field="childrenText"`), parsed on input — same "flatten a nested
-    array into a textarea" trick used for `encontros[].photos`.
-  - `photos[]` — `{ url, caption }`, this branch's own photo album
-  - `documents[]` — `{ name, url }`, rendered as external links
-  - `comments[]` — `{ name, text, date }`, a public guestbook per branch
-- `familyUnion` — `{ story, photos[] }`: the "how the three branches became
-  one family" narrative + a shared/general photo album, distinct from each
-  branch's own `photos[]`.
-- `places[]` — landmark locations (`name`, `photo`, `story`, `importance`).
+- `hero` (singleton row, `id = 1`) — `family_name`, `motto`, `photo_url`
+  (full-screen background image for the hero section, see `heroBgStyle()`
+  in `src/main.js`).
+- `encontros` — one row per family gathering/reunion (`title`, `date`,
+  `local`, `description`, `photo_url` cover, `photos` jsonb album) for the
+  "Marcos que nos moldaram" section. Rendered as navigable tabs
+  (`renderEncontros()`/`renderEncontroPanel()`, `.encontro-tab`/
+  `.encontro-panel-card`) instead of a static grid: clicking a tab swaps
+  the panel below. `state.activeEncontroIndex` tracks the open tab.
+  Saved together with `hero` from the same admin modal
+  (`saveHero()`/`api.saveHero()`) — on save, `api.saveHero()` deletes and
+  re-inserts every row in `encontros` rather than diffing which rows
+  changed. That's a deliberate simplification: the whole list is edited
+  as one block in one form, so there's nothing to gain from tracking
+  per-row inserts/updates/deletes, and it means every save gets fresh
+  UUIDs (harmless — nothing references an encontro's id from elsewhere).
+- `branches` — one row per family branch (currently Arruda/Pinto/Leda —
+  branch names deliberately have no "Os" article, e.g. `'Arruda'` not
+  `'Os Arruda'`). Columns: `name`, `photo_url`, `story`, `father`/`mother`
+  (jsonb `{ name, photo, birth, death, bio }` each — a branch can have
+  only a mother, only a father, or both), `children` (jsonb array, same
+  person shape plus optional `spouse` and `children[]` (grandkids) —
+  grandkids don't get their own spouse/children), `photos` (jsonb
+  `{url, caption}[]`), `documents` (jsonb `{name, url}[]`). In the public
+  "Pessoas da Família" spotlight, clicking a child with a spouse/grandkids
+  shows a "Família" section (`familyHtml()`). In the admin children
+  editor, spouse is 4 plain fields; grandchildren are a textarea, one per
+  line as `Nome | Nascimento | Falecimento` (`data-field="childrenText"`),
+  parsed on input — same "flatten a nested array into a textarea" trick
+  used for `encontros.photos`.
+- `branch_comments` — a public guestbook per branch (`branch_id`, `name`,
+  `text`, `created_at`). See "Comments" below for why this is a real
+  table instead of a `comments` jsonb column on `branches`.
+- `family_union` (singleton row, `id = 1`) — `story`, `photos` jsonb: the
+  "how the three branches became one family" narrative + a shared/general
+  photo album, distinct from each branch's own `photos`.
+- `history` (singleton row, `id = 1`) — `text`, a single free-text field
+  (rendered with `white-space: pre-line` via `.history-text` so line
+  breaks from the admin textarea are preserved) for the "História da
+  Família" section, positioned between the hero and the branches/tree
+  section.
+- `places` — landmark locations (`name`, `photo_url`, `story`,
+  `importance`).
+- `origins` — ancestor origin countries/regions (`flag_url`, `name`,
+  `photo_url` optional cover photo for the panel, `story`) for the
+  "Países de Origem dos Ancestrais" section. Rendered the same tabs+panel
+  way as `encontros` (`renderOrigins()`/`renderOriginPanel()`,
+  `state.activeOriginIndex`, reusing the `.encontro-tab`/
+  `.encontro-panel-*` CSS classes) instead of a click-into-modal card grid
+  like `places`. The panel's photo area behaves exactly like every other
+  photo box in the site — it does **not** show the flag; the flag only
+  appears small, next to the tab label and next to "ORIGEM ANCESTRAL" in
+  the panel (see "Icons and flags" below).
+- `memorias` — the standalone photo/document gallery (see "Memórias"
+  below). Not part of `state.data`; loaded and kept separately in
+  `state.memorias` since it has its own Realtime subscription.
 
-## Persistence
+## Persistence & sync status
 
-`localStorage` (`fam_data` key) is always written on every change via
-`persist()`. If the admin has configured a JSONBin.io bin (`fam_cfg` key:
-`{binId, key}`), `persist()` also `PUT`s the whole data blob there, and
-`loadData()` prefers fetching from JSONBin over localStorage on load. This
-is the *only* backend — there is no server code in this repo.
+Every read goes through `api.loadAllData()` (assembles `hero` + `encontros`
++ `branches` + `branch_comments` + `family_union` + `history` + `places` +
+`origins` into the same shape `state.data` has always had) or
+`api.loadMemorias()`. There is no local cache/fallback — Supabase is the
+single source of truth; if it's unreachable, `loadData()` shows an alert
+and falls back to an empty-but-valid `state.data` shape so the page
+doesn't crash.
+
+Every admin write goes through `withSync()` in `src/main.js`, which wraps
+a `src/api.js` call, shows "Salvando…"/"Salvo"/"Falha ao salvar" in
+`#syncLabel` (`renderSyncLabel()`), and alerts on error. Don't call
+`api.save*`/`api.delete*` directly from a button handler without wrapping
+it in `withSync()` — that's how the sync status label stays accurate.
 
 ## Admin
 
-Gated by a hardcoded password, `ADMIN_PASSWORD` in `script.js` (currently
-`'familia2026'`) — not real security, just a soft gate for family members.
-`state.view` toggles between `#publicView` and `#adminView` (`goAdmin()` /
-`goPublic()`); admin auth (`state.authed`) is in-memory only, not persisted.
+Gated by Supabase Auth (email + password), **a single admin account** —
+not one account per family member. `goAdmin()` shows `#authModal`
+(`#authEmail`/`#authPassword`) if not logged in; `api.signIn()` calls
+`supabase.auth.signInWithPassword()`. `state.authed`/`state.session` are
+kept in sync with the real Supabase session via
+`api.onAuthStateChange()` (registered once in `init()`) — don't
+hand-toggle `state.authed` anywhere else, it'll drift from the actual
+session. `#btnLogout` (top of the admin panel) calls `api.signOut()`.
 
-Every editable entity (hero, branch, familyUnion, place) follows the same
-edit pattern: `openEdit*()` clones the current object into `state.draft`,
-fills a modal's form fields, input listeners write straight into
-`state.draft`, and `save*()` clones `state.data`, splices in the draft, and
-calls `persist()`. List sub-fields (milestones, children, branch photos,
-documents, union photos) use a shared convention: a `<div class="subform-list">`
-re-rendered from `state.draft.<field>` after every add/remove, with
-`data-field`/`data-index` attributes read by a delegated `input` listener.
+**The only visible entry point into admin from the public site is
+`#btnGoAdminFooter`** — a small, low-contrast text link ("Acesso
+administrativo") in the footer (`.footer-admin-link`). There is
+deliberately no admin button in the header nav (desktop or mobile) — it
+was removed at the client's request so it isn't a prominent, publicly
+visible call-to-action. Don't re-add a nav-level admin button without
+being asked.
+
+Every editable entity (hero, history, branch, familyUnion, place, origin)
+follows the same edit pattern: `openEdit*()` clones the current object
+into `state.draft`, fills a modal's form fields, input listeners write
+straight into `state.draft`, and `save*()` calls the matching
+`api.save*()`, patches the result into `state.data`, and re-renders. New
+vs. edit is `state.draft.id === null` (new) vs. a real UUID (editing) —
+`api.save*()` branches on that to `insert` vs. `update`. List sub-fields
+(milestones, children, branch photos, documents, union photos) use a
+shared convention: a `<div class="subform-list">` re-rendered from
+`state.draft.<field>` after every add/remove, with `data-field`/
+`data-index` attributes read by a delegated `input` listener — these stay
+as plain jsonb, never their own table. Photo fields within those same
+lists follow the parallel `data-photo-field`/`data-index` convention
+handled by `wireListPhotoUpload()` instead (see "Photo fields" below) —
+deliberately a different attribute name so the two delegated listeners on
+the same container don't collide.
+
+## Row Level Security (`supabase/schema.sql`)
+
+Every table: public `SELECT`, `INSERT`/`UPDATE`/`DELETE` restricted to the
+`authenticated` role. The one exception is `branch_comments`, which also
+allows public `INSERT` (see "Comments" below) — `DELETE` on it is still
+`authenticated`-only, for moderation. If you add a new table, copy this
+pattern (the `do $$ ... $$` loop near the bottom of `schema.sql` applies
+the standard 4 policies to a list of table names — add the new table name
+to that array rather than hand-writing 4 more `create policy` statements).
+
+Storage: both the `memorias` and `fotos` buckets are public-read,
+authenticated-write/delete.
+
+## Photo fields (upload, not paste)
+
+Every photo field in the admin (hero background, branch cover, father,
+mother, each child, each child's spouse, branch photo album, family-union
+photo album, place, origin, encontro cover, encontro photo album) uploads
+a file from the admin's computer to the `fotos` Storage bucket via
+`api.uploadPhoto()` — there is no "paste a URL" text input for photos
+anywhere any more. Branch `documents` use the exact same upload path and
+the same `fotos` bucket (Storage doesn't care about content type), just
+with `accept="application/pdf,.pdf"` on the file input instead of
+`image/*`, since a document is expected to be a PDF, not a picture. Two
+helpers in `src/main.js` cover every case:
+
+- **`wirePhotoPicker({...})`** — for the ~6 single, fixed-id fields (hero,
+  branch cover, father, mother, place, origin). Wired once per field in
+  `bindStaticEvents()` (assigned to a module-level `let` — e.g.
+  `heroPhotoPicker`) and returns `{ refresh() }`. Because `state.draft` is
+  replaced every time an edit modal opens, every `openEdit*()`/
+  `fill*Form()` function **must** call the matching `.refresh()` after
+  setting `state.draft` — that's what repaints the thumbnail preview for
+  whatever is now being edited. If you add a new single photo field,
+  follow this same pattern: wire it once, refresh it on open.
+- **`wireListPhotoUpload(containerId, applyUrl, rerender)`** — for photos
+  *inside* a dynamically-rendered list (children/spouse, branch photos,
+  union photos, branch documents), where rows get regenerated on every add/remove so a
+  fixed id per field isn't possible. It delegates the file input's
+  `change` event on the whole list container, identifies the row via
+  `data-photo-field` + `data-index` (mirrors the existing `data-field` +
+  `data-index` convention already used for the list's text inputs — kept
+  as a *separate* attribute specifically so the old delegated `input`
+  listener for text fields doesn't also try to handle file inputs), calls
+  `applyUrl(field, index, url)` to patch `state.draft`, then calls
+  `rerender()` (the list's own render function) to show the new
+  thumbnail. Progress during upload is shown as plain "Enviando… X%" text
+  in a `data-photo-status-for="{field}-{index}"` span next to that row —
+  no per-row progress bar, to keep the markup light; the ~6 fixed fields
+  above get a real animated bar (`.upload-progress`) since they're more
+  prominent.
+- **Encontros are a special case**, handled by hand in its own `change`
+  listener (not through `wireListPhotoUpload`) because it needs two
+  different behaviors per row: `data-photo-field="photo"` replaces the
+  single cover photo (same as any other list-photo field), but
+  `data-photo-field="albumAdd"` is a `multiple` file input that uploads
+  every selected file in a sequential loop and *pushes* each result into
+  `encontro.photos[]` rather than replacing a single value — see
+  `renderEncontrosEditList()` and the matching `change` handler in
+  `bindStaticEvents()`. Album photos are removed one at a time via
+  `data-action="removeEncontroAlbumPhoto"` (needs both `data-index`, the
+  encontro, and `data-photo-index`, the photo within its album — the only
+  place in the codebase a delegated action needs two indices).
+
+None of this touches Storage cleanup: replacing or removing a photo does
+**not** delete the old file from the `fotos` bucket (unlike `memorias`,
+which does clean up on delete — see below). An orphaned file sitting in
+Storage is a minor, invisible cost; wiring up cleanup here would mean
+tracking "previous URL" through every save path for little benefit — skip
+it unless it actually becomes a problem (e.g. Storage usage near a plan
+limit).
+
+## Memórias (photo/document gallery)
+
+A flat, chronological feed of published memories — distinct from the
+photos/documents that live inside a branch/place/encontro/origin, which
+are pasted-URL fields with no upload and no independent identity. Each
+memória has a `titulo`, optional `descricao`, an uploaded file
+(`url_arquivo`), and a `tipo` (`'foto'` or `'documento'`, inferred from
+the file's MIME type — `image/*` → foto, anything else → documento).
+
+- **Upload** (`submitMemoriaForm()` in `src/main.js`,
+  `api.uploadMemoriaFile()` in `src/api.js`): goes to the `memorias`
+  Storage bucket. Deliberately uses a raw `XMLHttpRequest` against the
+  Storage REST endpoint instead of `supabase.storage.from().upload()` —
+  the SDK's upload call doesn't expose a progress event, and a percentage
+  progress bar was explicitly requested. If you touch this, keep the raw
+  XHR; don't "simplify" it back to the SDK call unless you're also OK
+  losing the progress bar. The XHR needs the current session's access
+  token in the `Authorization` header (plus the anon key in `apikey`) —
+  RLS on `storage.objects` requires `authenticated` for writes.
+- **Realtime**: `api.subscribeMemorias()` opens a Postgres Changes
+  channel on the `memorias` table (subscribed once in `init()`); any
+  INSERT/UPDATE/DELETE anywhere (including from another browser/device)
+  triggers `loadMemoriasData()`, which refetches and re-renders both the
+  public grid and the admin list. The publisher's own browser *also*
+  updates optimistically right after a successful upload (so they don't
+  wait on Realtime latency to see their own memória) — the Realtime
+  callback then fires shortly after and re-fetches anyway. That's a
+  harmless redundant render, not a bug; don't add de-duplication logic
+  for it unless it actually causes a visible glitch.
+- **Delete** (`deleteMemoria()`): removes the DB row, then best-effort
+  removes the Storage object (derives the storage path from the public
+  URL via `storagePathFromPublicUrl()`). Storage cleanup failure doesn't
+  block the DB delete — the row disappearing from the public list is what
+  matters most; an orphaned file in Storage is a minor, non-visible loss.
 
 ## Public branch modal (`#branchModal`) — the most structurally unusual part
 
@@ -152,28 +358,111 @@ iteration did that and was explicitly replaced).
 
 ### Comments
 
-`submitComment()` deliberately does **not** call `openBranchModal()` again
-after saving — it only re-renders `#branchModalComments` in place (via the
-shared `commentsHtml()` helper also used by `openBranchModal()`). Calling
-the full open function would reset scroll position to 0 and collapse an
-open person spotlight, which is bad UX right after submitting a comment
-from screen 2. Keep this in-place-update pattern if comments gain more
-behavior (e.g. delete).
+Any site visitor can post a comment on a branch **without logging in** —
+this is a deliberate public guestbook, not an admin-only feature. That's
+exactly why `branch_comments` is its own table with its own RLS policy
+(`insert_public`) instead of a `comments` jsonb column on `branches`
+(which would inherit the "writes need `authenticated`" rule that applies
+to everything else) — see "Row Level Security" above. `submitComment()`
+in `src/main.js` calls `api.addComment()` (no auth required) and
+deliberately does **not** call `openBranchModal()` again after saving —
+it only re-renders `#branchModalComments` in place (via the shared
+`commentsHtml()` helper also used by `openBranchModal()`). Calling the
+full open function would reset scroll position to 0 and collapse an open
+person spotlight, which is bad UX right after submitting a comment from
+screen 2. Keep this in-place-update pattern if comments gain more
+behavior.
+
+Moderation (delete) lives in the admin edit-branch modal, not on the
+public guestbook — a read-only "Comentários e memórias" list
+(`renderCommentsEditList()`, `#commentsEditList`) shows each comment's
+name/date/text with just a delete button, no edit. `deleteComment()`
+calls `api.deleteComment()` immediately (through `withSync()`, like every
+other admin write) rather than staging the removal into `state.draft` for
+the branch's own "Salvar" button — `branch_comments` is its own table, so
+unlike `documents`/`photos`/etc. there's nothing in `api.saveBranch()`
+that would ever persist a comment removal; it has to be its own
+Supabase call. After it succeeds, both `state.draft.comments` (so the
+open modal's list updates) and the matching branch in
+`state.data.branches` (so the public guestbook and the admin branch list's
+comment count stay in sync without a full reload) are patched directly.
 
 ## Page section order
 
-Intentionally: Hero → **Árvore Genealógica** (`#ramos`, branches — includes
-the `familyUnion` "how we became one family" block above the branch cards)
-→ **Linha do Tempo** (`#linha`, milestones) → **Locais Marcantes**
-(`#locais`) → Footer. This was reordered from the original
-timeline-first layout at the user's request; nav links (desktop + mobile)
-follow the same order.
+Intentionally: Hero (`#topo`, full-screen background photo from
+`hero.photo_url`, see `heroBgStyle()`) → **História da Família**
+(`#historia`) → **Árvore Genealógica** (`#ramos`, branches — includes the
+`familyUnion` "how we became one family" block above the branch cards) →
+**Linha do Tempo** (`#linha`, encontros) → **Locais Marcantes**
+(`#locais`) → **Países de Origem dos Ancestrais** (`#origens`) →
+**Memórias** (`#memorias`) → Footer. Nav links (desktop + mobile) follow
+the same order. Don't reorder these without being asked — this was set
+deliberately at the client's request, section by section, across
+multiple rounds of feedback.
 
-## Icons
+## Death dates
 
-All icons are inline SVGs in the `ICONS` object at the top of `script.js`.
-HTML uses `${icon:name}` placeholders (e.g. `${icon:trash-2}`), which
-`replaceIconPlaceholders()` regex-replaces with the real SVG markup on
-script load, before anything else runs. Add new icons there, not as
-`<img>`/external icon fonts — the project has zero external asset
-dependencies by design (only Google Fonts for typefaces).
+`lifespan(p)` (used everywhere a person's birth/death is shown — the people
+showcase, the spotlight, the family tree) prefixes a set death year with a
+cross: `"1898 — ✝ 1970"`. A living person (no `death`) shows `"— presente"`
+with no cross. This is the only place that needs to change if the
+convention for showing death dates changes.
+
+## Branches carousel (`#branchesGrid`)
+
+`.branches-grid` is a horizontally-scrolling flex row (`overflow-x: auto` +
+`scroll-snap-type: x mandatory`) that centers its cards when they fit. It
+sets `justify-content: safe center` (with a plain `flex-start` declared
+just before it as a fallback for browsers that don't parse the `safe`
+keyword) — **not** a bare `justify-content: center`. Plain `center` on an
+overflowing flex container is a classic bug: the browser centers the flex
+line first and only then clips to the scroll container, so the first
+and/or last card becomes permanently unreachable by scrolling (this is
+what "only two of the three branches are visible on mobile" turned out to
+be). `safe center` falls back to start-alignment exactly when the content
+would overflow, which keeps every card reachable while still centering on
+wide screens where all cards fit. Don't revert this to plain `center`.
+
+## Icons and flags
+
+All icons are inline SVGs in the `ICONS` object at the top of
+`src/main.js`. HTML uses `${icon:name}` placeholders (e.g.
+`${icon:trash-2}`), which `replaceIconPlaceholders()` regex-replaces with
+the real SVG markup on script load, before anything else runs. Add new
+icons there, not as `<img>`/external icon fonts.
+
+Country flags (`origins.flag_url`) are a deliberate exception. Unicode
+flag emoji (`🇵🇹`, `🇪🇸`, ...) were tried first, but Windows' bundled emoji
+font renders them as two-letter codes (`PT`, `ES`) instead of actual flag
+glyphs, which isn't acceptable for a family-facing site — so flags are
+real images instead: `flag_url` stores a full URL to a flag SVG on
+`flagcdn.com` (e.g. `https://flagcdn.com/pt.svg`), and the admin
+`#editOriginFlag` `<select>` in `index.html` has each option's `value` set
+to that country's flagcdn URL directly (so picking "Portugal" just sets
+`flag` to the right URL — there's no separate country-code-to-URL mapping
+to keep in sync). `flagHtml(flag, cls)` in `src/main.js` renders that URL
+as an `<img>`; it also tolerates a bare emoji string (renders as text) or
+an empty value (falls back to the generic `map-pin` icon) for resilience,
+but new entries always come from the dropdown. flagcdn.com requires no
+API key and has a stable, predictable per-country URL scheme
+(`https://flagcdn.com/{iso-alpha-2}.svg`).
+
+## Supabase project setup (one-time, manual)
+
+This repo has the schema and client code; it does **not** have a Supabase
+project — that has to be created once, by hand, in the Supabase dashboard:
+
+1. Create a project at supabase.com.
+2. SQL Editor → New query → paste all of `supabase/schema.sql` → Run.
+   Creates every table, RLS policy, and the `memorias`/`fotos` Storage
+   buckets.
+3. Storage → confirm public `memorias` and `fotos` buckets both exist
+   (the script creates them; this is just a sanity check).
+4. Authentication → Users → Add user → create the one admin account
+   (email + password) used to log into `/#memorias` admin actions and the
+   rest of the admin panel. This project uses a single shared admin
+   login, not one account per family member.
+5. Project Settings → API → copy the Project URL and the `anon` `public`
+   key into `.env` (`VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY`) —
+   copy `.env.example` first if `.env` doesn't exist yet.
+6. `npm install && npm run dev` (or `npm run build` for production).

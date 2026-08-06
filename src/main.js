@@ -1,7 +1,8 @@
 /* =========================================================
-   Memórias & Legado — script.js
-   JavaScript Vanilla (ES6+) — sem frameworks/bibliotecas de UI
+   Memórias & Legado — src/main.js
+   JavaScript Vanilla (ES6+) — dados e mídia no Supabase (ver src/api.js)
    ========================================================= */
+import * as api from './api.js';
 
 /* ---------------------------------------------------------
    0. ÍCONES (SVG inline, sem dependências externas)
@@ -37,7 +38,9 @@ const ICONS = {
   'trash-2': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="7" x2="20" y2="7"/><path d="M6 7V4h12v3"/><path d="M6 7l1 13h10l1-13"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>',
   'file-text': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><polyline points="14 3 14 8 19 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg>',
   image: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="M21 16l-5.5-5.5L4 21"/></svg>',
-  'message-circle': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>'
+  'message-circle': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>',
+  upload: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>',
+  'log-out': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>'
 };
 
 function iconHtml(name) { return ICONS[name] || ''; }
@@ -48,147 +51,34 @@ function iconHtml(name) { return ICONS[name] || ''; }
 })();
 
 /* ---------------------------------------------------------
-   1. DADOS PADRÃO / NORMALIZAÇÃO
+   1. HELPERS DE FORMULÁRIO (formas "em branco" usadas pelos editores
+      do admin — os dados de verdade vêm sempre do Supabase, ver
+      src/api.js; isto aqui é só pra montar rascunhos novos na UI)
    --------------------------------------------------------- */
-const ADMIN_PASSWORD = 'familia2026';
-const LS_DATA_KEY = 'fam_data';
-const LS_CFG_KEY = 'fam_cfg';
-
 function defaultPerson() { return { name: '', photo: '', birth: '', death: '', bio: '' }; }
 // Um filho pode ter seus próprios agregados: cônjuge e filhos (netos do
 // patriarca/matriarca do ramo). Não recursivo além disso — netos não têm
 // cônjuge/filhos próprios exibidos.
 function defaultChild() { return Object.assign(defaultPerson(), { spouse: null, children: [] }); }
-function normalizeChild(c) {
-  c = c || {};
-  return Object.assign(defaultPerson(), c, {
-    spouse: c.spouse && c.spouse.name ? Object.assign(defaultPerson(), c.spouse) : null,
-    children: Array.isArray(c.children) ? c.children.map(k => Object.assign(defaultPerson(), k)) : []
-  });
-}
-
-function defaultData() {
-  return {
-    hero: {
-      familyName: 'Arruda & Pinto & Leda',
-      motto: 'Guardadas as memórias, honramos quem veio antes e semeamos quem virá depois.',
-      encontros: [
-        { id: 'e1', title: 'O Reencontro do Sítio', date: 'Julho de 1968', local: 'Sítio Ancestral, Minas Gerais', desc: 'Os descendentes de Manoel Albuquerque, já divididos entre os ramos Arruda, Pinto e Leda, voltaram a se encontrar durante a construção do sítio.', photo: '', photos: [] },
-        { id: 'e2', title: 'O Casamento que Uniu os Ramos', date: 'Setembro de 1985', local: 'Casa de Paraty', desc: 'Um casamento entre os ramos Pinto e Leda selou a aliança entre as famílias, celebrado na casa à beira-mar.', photo: '', photos: [] },
-        { id: 'e3', title: 'O Grande Reencontro', date: '2001', local: 'Sítio Ancestral, Minas Gerais', desc: 'Primeiro encontro a reunir mais de 120 descendentes de todos os ramos em uma só grande família.', photo: '', photos: [] }
-      ]
-    },
-    branches: [
-      {
-        id: 'b1', name: 'Os Arruda', photo: '',
-        story: 'Guardiões do arquivo fotográfico e dos documentos de imigração, este ramo cresceu na capital paulista mantendo viva a memória escrita da família.',
-        father: { name: 'Joaquim Arruda', photo: '', birth: '1898', death: '1970', bio: 'Imigrante português, fundou o primeiro comércio da família no Brasil.' },
-        mother: { name: 'Helena Silva', photo: '', birth: '1902', death: '1994', bio: 'Aos 88 anos, era a memória viva de todas as histórias — cada nome, cada data, cada receita.' },
-        children: [
-          {
-            name: 'Rafael Silva', photo: '', birth: '1928', death: '2015', bio: 'Digitalizou mais de 2.000 fotografias e cartas antigas para as próximas gerações.',
-            spouse: { name: 'Cecília Nogueira', photo: '', birth: '1932', death: '2019', bio: '' },
-            children: [
-              { name: 'André Silva', photo: '', birth: '1955', death: '', bio: '' },
-              { name: 'Marina Silva', photo: '', birth: '1958', death: '', bio: '' }
-            ]
-          }
-        ],
-        photos: [], documents: [], comments: []
-      },
-      {
-        id: 'b2', name: 'Os Pintos', photo: '',
-        story: 'Descendentes de Maria Albuquerque, espalhados pelo Nordeste, celebram a tradição da música e da culinária ancestral.',
-        father: defaultPerson(),
-        mother: { name: 'Maria Albuquerque', photo: '', birth: '1910', death: '1988', bio: 'Costureira e contadora de causos, deu nome a um dos ramos mais numerosos.' },
-        children: [
-          { name: 'Tiago Nunes', photo: '', birth: '1935', death: '', bio: 'Mantém o caderno de receitas centenário e organiza o almoço anual da família.' }
-        ],
-        photos: [], documents: [], comments: []
-      },
-      {
-        id: 'b3', name: 'Os Leda', photo: '',
-        story: 'Ligados à casa à beira-mar, este ramo preserva as tradições do litoral e a manutenção do casarão histórico.',
-        father: defaultPerson(),
-        mother: { name: 'Beatriz Costa', photo: '', birth: '1940', death: '', bio: 'Cuida da Casa de Paraty e recebe os parentes durante as festas de fim de ano.' },
-        children: [],
-        photos: [], documents: [], comments: []
-      }
-    ],
-    familyUnion: {
-      story: 'Em 1968, durante a construção do Sítio Ancestral em Minas Gerais, os descendentes de Manoel Albuquerque — já divididos entre os ramos Arruda, Pinto e Leda — voltaram a se encontrar. Ao longo das décadas seguintes, casamentos e alianças entre os três ramos foram tecendo um só tecido familiar. O Grande Reencontro de 2001 celebrou essa união, reunindo mais de 120 descendentes de todos os ramos em uma só grande família.',
-      photos: []
-    },
-    places: [
-      { id: 'p1', name: 'A Casa de Paraty', photo: '', story: 'Casario colonial de janelas azuis, construído em 1934 sobre pedras trazidas de barco. Abriga móveis, retratos e o relógio de parede que nunca parou.', importance: 'Ponto de encontro de cinco gerações — cada verão, um novo capítulo escrito nas suas paredes.' },
-      { id: 'p2', name: 'O Sítio Ancestral', photo: '', story: 'Entre cafezais no interior de Minas, o sítio guarda o forno a lenha e a figueira centenária plantada pelo bisavô.', importance: 'Onde nasceram as tradições da roça: a colheita, o fubá e as noites de viola.' },
-      { id: 'p3', name: 'A Igreja Matriz', photo: '', story: 'Pequena capela onde foram celebrados batizados, casamentos e despedidas ao longo de mais de um século.', importance: 'Testemunha silenciosa dos grandes momentos que uniram a família.' }
-    ]
-  };
-}
-
-function normalizeBranch(b) {
-  b = b || {};
-  return {
-    id: b.id || uid('b'),
-    name: b.name || '',
-    photo: b.photo || '',
-    story: b.story || '',
-    father: Object.assign(defaultPerson(), b.father || {}),
-    mother: Object.assign(defaultPerson(), b.mother || {}),
-    children: Array.isArray(b.children) ? b.children.map(normalizeChild) : [],
-    photos: Array.isArray(b.photos) ? b.photos : [],
-    documents: Array.isArray(b.documents) ? b.documents : [],
-    comments: Array.isArray(b.comments) ? b.comments : []
-  };
-}
-
-function normalizeEncontro(e) {
-  e = e || {};
-  return {
-    id: e.id || uid('e'),
-    title: e.title || '',
-    date: e.date || '',
-    local: e.local || '',
-    photo: e.photo || '',
-    photos: Array.isArray(e.photos) ? e.photos : [],
-    desc: e.desc || ''
-  };
-}
-
-function normalizeData(d) {
-  const def = defaultData();
-  d = d || {};
-  return {
-    hero: Object.assign({}, def.hero, d.hero || {}, {
-      encontros: Array.isArray(d.hero && d.hero.encontros) && d.hero.encontros.length
-        ? d.hero.encontros.map(normalizeEncontro)
-        : def.hero.encontros
-    }),
-    branches: Array.isArray(d.branches) && d.branches.length ? d.branches.map(normalizeBranch) : def.branches,
-    familyUnion: Object.assign({ story: '', photos: [] }, d.familyUnion || {}, {
-      photos: Array.isArray(d.familyUnion && d.familyUnion.photos) ? d.familyUnion.photos : (def.familyUnion.photos)
-    }),
-    places: Array.isArray(d.places) ? d.places : def.places
-  };
-}
 
 /* ---------------------------------------------------------
    2. ESTADO DA APLICAÇÃO
    --------------------------------------------------------- */
 const state = {
-  data: null,
-  view: 'public', // 'public' | 'admin'
+  data: null,       // { hero, branches, familyUnion, history, places, origins } — vem do Supabase
+  memorias: [],     // galeria de memórias — carregada e mantida via Realtime
+  view: 'public',   // 'public' | 'admin'
   loading: true,
-  authed: false,
+  authed: false,    // sessão Supabase Auth ativa?
+  session: null,
   activeBranchId: null,
   activePlaceId: null,
   activeEncontroIndex: 0,
-  editType: null, // 'hero' | 'branch' | 'place' | 'union'
+  activeOriginIndex: 0,
+  editType: null,   // 'hero' | 'branch' | 'place' | 'union' | 'history' | 'origin'
   editId: null,
   draft: null,
-  syncStatus: '', // '', 'saving', 'saved', 'local', 'error'
-  cfg: { binId: '', key: '' }
+  syncStatus: ''    // '', 'saving', 'saved', 'error'
 };
 
 function uid(prefix) { return (prefix || 'x') + Math.random().toString(36).slice(2, 9); }
@@ -205,76 +95,65 @@ function initials(name) {
 }
 function lifespan(p) {
   if (!p || (!p.birth && !p.death)) return '';
-  return `${p.birth || '?'} — ${p.death || 'presente'}`;
+  const death = p.death ? `✝ ${p.death}` : 'presente';
+  return `${p.birth || '?'} — ${death}`;
 }
 function personCount(b) {
   return (b.father && b.father.name ? 1 : 0) + (b.mother && b.mother.name ? 1 : 0) + (b.children || []).length;
 }
+function formatDate(iso) {
+  try { return new Date(iso).toLocaleDateString('pt-BR'); } catch (e) { return ''; }
+}
 
-const PLACEHOLDER_GRADIENT = 'repeating-linear-gradient(45deg,#efe7d8,#efe7d8 12px,#e6dbc6 12px,#e6dbc6 24px)';
+const PLACEHOLDER_GRADIENT = 'repeating-linear-gradient(45deg,#e5f1e8,#e5f1e8 12px,#cbe6d2 12px,#cbe6d2 24px)';
+// url() usa aspas simples porque este valor é embutido num atributo HTML
+// style="..." (aspas duplas) em vários lugares via template string — aspas
+// duplas aqui colidiriam com as do atributo e cortariam o valor ao meio,
+// deixando só a cor de fundo/gradiente de placeholder visível.
 function photoStyle(url) {
-  return url ? `background-image:url("${escapeHtml(url)}")` : `background-image:${PLACEHOLDER_GRADIENT}`;
+  return url ? `background-image:url('${escapeHtml(url)}')` : `background-image:${PLACEHOLDER_GRADIENT}`;
 }
 function avatarStyle(url) {
-  return url ? `background-image:url("${escapeHtml(url)}")` : 'background-image:linear-gradient(135deg,#3f6a6b,#34595a)';
+  return url ? `background-image:url('${escapeHtml(url)}')` : 'background-image:linear-gradient(135deg,#2f7a31,#1c4a1e)';
+}
+const HERO_OVERLAY = 'linear-gradient(180deg, rgba(9,20,14,0.35) 0%, rgba(9,20,14,0.5) 55%, rgba(9,20,14,0.86) 100%)';
+function heroBgStyle(url) {
+  return url ? `background-image:${HERO_OVERLAY}, url('${escapeHtml(url)}')` : `background-image:${HERO_OVERLAY}, ${PLACEHOLDER_GRADIENT}`;
+}
+// origin.flag é a URL de uma imagem de bandeira (escolhida no <select> do
+// admin, ex: flagcdn.com). Mantém um fallback pro formato antigo (emoji de
+// bandeira) e um ícone genérico quando não há bandeira definida.
+function flagHtml(flag, cls) {
+  cls = cls || '';
+  if (!flag) return `<span class="icon ${cls}" aria-hidden="true">${iconHtml('map-pin')}</span>`;
+  if (/^https?:\/\//.test(flag)) return `<img class="${cls}" src="${escapeHtml(flag)}" alt="" loading="lazy">`;
+  return `<span class="${cls}">${escapeHtml(flag)}</span>`;
 }
 
 /* ---------------------------------------------------------
-   3. PERSISTÊNCIA (localStorage + JSONBin.io via fetch)
+   3. CARREGAMENTO DE DADOS (Supabase — ver src/api.js)
    --------------------------------------------------------- */
-function loadCfgFromStorage() {
-  try {
-    const c = JSON.parse(localStorage.getItem(LS_CFG_KEY) || 'null');
-    if (c && typeof c === 'object') return { binId: c.binId || '', key: c.key || '' };
-  } catch (e) { }
-  return { binId: '', key: '' };
-}
-
-async function loadData(cfg) {
-  cfg = cfg || state.cfg;
+async function loadData() {
   setLoading(true);
-  if (cfg && cfg.binId && cfg.key) {
-    try {
-      const res = await fetch(`https://api.jsonbin.io/v3/b/${encodeURIComponent(cfg.binId)}/latest`, {
-        headers: { 'X-Master-Key': cfg.key }
-      });
-      if (res.ok) {
-        const json = await res.json();
-        state.data = normalizeData(json.record);
-        setLoading(false);
-        return;
-      }
-    } catch (e) { /* falls back to local */ }
+  try {
+    state.data = await api.loadAllData();
+  } catch (err) {
+    console.error('Falha ao carregar dados do Supabase:', err);
+    alert('Não foi possível carregar os dados do site. Verifique sua conexão e as credenciais do Supabase (.env). Veja o console para detalhes.');
+    state.data = { hero: { familyName: '', motto: '', photo: '', encontros: [] }, branches: [], familyUnion: { story: '', photos: [] }, history: { text: '' }, places: [], origins: [] };
   }
-  let local = null;
-  try { local = JSON.parse(localStorage.getItem(LS_DATA_KEY) || 'null'); } catch (e) { }
-  state.data = normalizeData(local || defaultData());
   setLoading(false);
 }
 
-async function persist(newData) {
-  state.data = newData;
-  try { localStorage.setItem(LS_DATA_KEY, JSON.stringify(newData)); } catch (e) { }
-  renderAll();
-
-  const cfg = state.cfg;
-  if (cfg && cfg.binId && cfg.key) {
-    setSyncStatus('saving');
-    try {
-      const res = await fetch(`https://api.jsonbin.io/v3/b/${encodeURIComponent(cfg.binId)}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'X-Master-Key': cfg.key },
-        body: JSON.stringify(newData)
-      });
-      setSyncStatus(res.ok ? 'saved' : 'error');
-    } catch (e) {
-      setSyncStatus('error');
-    }
-  } else {
-    setSyncStatus('local');
+async function loadMemoriasData() {
+  try {
+    state.memorias = await api.loadMemorias();
+  } catch (err) {
+    console.error('Falha ao carregar memórias:', err);
+    state.memorias = [];
   }
-  clearTimeout(persist._t);
-  persist._t = setTimeout(() => setSyncStatus(''), 2600);
+  renderMemorias();
+  renderAdminMemoriasList();
 }
 
 function setLoading(v) {
@@ -287,18 +166,38 @@ function setSyncStatus(status) {
   renderSyncLabel();
 }
 
+// Roda uma ação de escrita (salvar/excluir) mostrando o status de
+// sincronização no topo do admin e tratando erro com um alerta —
+// evita repetir o mesmo try/catch em cada save*/delete* abaixo.
+async function withSync(action) {
+  setSyncStatus('saving');
+  try {
+    await action();
+    setSyncStatus('saved');
+  } catch (err) {
+    console.error(err);
+    setSyncStatus('error');
+    alert('Não foi possível salvar no Supabase. Veja o console para detalhes.');
+  }
+  clearTimeout(withSync._t);
+  withSync._t = setTimeout(() => setSyncStatus(''), 2600);
+}
+
 /* ---------------------------------------------------------
    4. RENDERIZAÇÃO — VIEW PÚBLICA
    --------------------------------------------------------- */
 function renderAll() {
   renderHero();
+  renderHistory();
   renderEncontros();
   renderFamilyUnion();
   renderBranches();
   renderPlaces();
+  renderOrigins();
   renderAdminSummaries();
   renderAdminBranchList();
   renderAdminPlaceList();
+  renderAdminOriginList();
   renderViewToggle();
 }
 
@@ -307,9 +206,16 @@ function renderHero() {
   document.getElementById('heroFamilyName').textContent = hero.familyName;
   document.getElementById('heroMotto').textContent = hero.motto;
   document.getElementById('footerFamilyName').textContent = hero.familyName;
+  document.getElementById('topo').style.cssText += heroBgStyle(hero.photo);
 }
 
-// Encontros são exibidos como 3 abas navegáveis (uma por registro de reunião
+function renderHistory() {
+  const text = (state.data.history && state.data.history.text) || '';
+  document.getElementById('historyText').textContent = text
+    || 'Nenhum histórico cadastrado ainda. Use o painel de administração para contar a história e a ligação entre as famílias.';
+}
+
+// Encontros são exibidos como abas navegáveis (uma por registro de reunião
 // da família) em vez de um grid estático — clicar numa aba troca o painel
 // abaixo, que mostra data, local, descrição e o álbum de fotos daquele encontro.
 function renderEncontros() {
@@ -403,6 +309,73 @@ function renderPlaces() {
       </span>
     </button>
   `).join('');
+}
+
+// Países de origem são exibidos como abas de bandeiras (mesmo padrão dos
+// encontros): clicar numa bandeira troca o painel abaixo com a história.
+function renderOrigins() {
+  const tabsEl = document.getElementById('originsTabs');
+  const panelEl = document.getElementById('originsPanel');
+  const origins = state.data.origins || [];
+
+  if (!origins.length) {
+    tabsEl.innerHTML = '';
+    panelEl.innerHTML = '<p class="modal-story">Nenhum país de origem registrado ainda.</p>';
+    return;
+  }
+
+  if (state.activeOriginIndex >= origins.length) state.activeOriginIndex = 0;
+
+  tabsEl.innerHTML = origins.map((o, i) => `
+    <button type="button" class="encontro-tab origin-tab ${i === state.activeOriginIndex ? 'is-active' : ''}" data-action="selectOrigin" data-index="${i}">
+      ${flagHtml(o.flag, 'origin-tab-flag')} ${escapeHtml(o.name)}
+    </button>
+  `).join('');
+
+  renderOriginPanel(origins[state.activeOriginIndex]);
+}
+
+// Painel horizontal (foto ao lado do texto), igual ao dos encontros mas maior.
+function renderOriginPanel(o) {
+  const panelEl = document.getElementById('originsPanel');
+  panelEl.innerHTML = `
+    <div class="encontro-panel-card origin-panel-card">
+      <span class="encontro-panel-photo" style="${photoStyle(o.photo)}">
+        ${!o.photo ? '<span class="no-photo-label">FOTO DA ORIGEM</span>' : ''}
+      </span>
+      <div class="encontro-panel-body">
+        <div class="place-eyebrow">${flagHtml(o.flag, 'origin-eyebrow-flag')} Origem ancestral</div>
+        <h3 class="encontro-panel-title">${escapeHtml(o.name)}</h3>
+        <p class="encontro-desc">${escapeHtml(o.story)}</p>
+      </div>
+    </div>`;
+}
+
+// Galeria de memórias soltas (fotos/documentos com título e descrição),
+// publicada pelo admin via upload no Supabase Storage. Ordenada por data
+// (mais recente primeiro) e atualizada em tempo real — ver
+// api.subscribeMemorias() e a chamada em init().
+function renderMemorias() {
+  const grid = document.getElementById('memoriasGrid');
+  if (!grid) return;
+  const items = state.memorias || [];
+  grid.innerHTML = items.length
+    ? items.map((m) => `
+      <div class="memoria-card">
+        <span class="memoria-thumb" style="${m.tipo === 'foto' ? photoStyle(m.url) : ''}">
+          ${m.tipo !== 'foto' ? `<span class="icon memoria-doc-icon" aria-hidden="true">${iconHtml('file-text')}</span>` : ''}
+        </span>
+        <div class="memoria-body">
+          <span class="memoria-date">${escapeHtml(formatDate(m.criadoEm))}</span>
+          <h3 class="memoria-title">${escapeHtml(m.titulo)}</h3>
+          ${m.descricao ? `<p class="memoria-desc">${escapeHtml(m.descricao)}</p>` : ''}
+          <a class="document-item memoria-link" href="${escapeHtml(m.url)}" target="_blank" rel="noopener">
+            <span class="icon">${iconHtml(m.tipo === 'foto' ? 'image' : 'file-text')}</span>
+            <span>${m.tipo === 'foto' ? 'Ver em tamanho real' : 'Abrir documento'}</span>
+          </a>
+        </div>
+      </div>`).join('')
+    : '<p class="modal-story">Nenhuma memória publicada ainda.</p>';
 }
 
 /* ---------------------------------------------------------
@@ -665,22 +638,33 @@ function commentsHtml(comments) {
     : '<p class="modal-story">Seja o primeiro a deixar uma lembrança sobre esta família.</p>';
 }
 
-function submitComment(e) {
+// Qualquer visitante pode comentar, sem login (ver policy "insert_public"
+// em branch_comments, supabase/schema.sql) — não passa por withSync
+// porque não é uma ação de admin.
+async function submitComment(e) {
   e.preventDefault();
   const name = document.getElementById('commentName').value.trim();
   const text = document.getElementById('commentText').value.trim();
   if (!name || !text || !state.activeBranchId) return;
-  const d = clone(state.data);
-  const b = d.branches.find(x => x.id === state.activeBranchId);
+  const b = state.data.branches.find(x => x.id === state.activeBranchId);
   if (!b) return;
-  b.comments = b.comments || [];
-  b.comments.push({ name, text, date: new Date().toLocaleDateString('pt-BR') });
-  persist(d);
-  // Atualiza só a lista de comentários (sem reabrir o modal) para não perder
-  // a posição de rolagem nem o estado de foco numa pessoa.
-  document.getElementById('branchModalComments').innerHTML = commentsHtml(b.comments);
-  document.getElementById('commentName').value = '';
-  document.getElementById('commentText').value = '';
+  const submitBtn = e.target.querySelector('button[type="submit"]');
+  if (submitBtn) submitBtn.disabled = true;
+  try {
+    const comment = await api.addComment(state.activeBranchId, name, text);
+    b.comments = b.comments || [];
+    b.comments.push(comment);
+    // Atualiza só a lista de comentários (sem reabrir o modal) para não perder
+    // a posição de rolagem nem o estado de foco numa pessoa.
+    document.getElementById('branchModalComments').innerHTML = commentsHtml(b.comments);
+    document.getElementById('commentName').value = '';
+    document.getElementById('commentText').value = '';
+  } catch (err) {
+    console.error(err);
+    alert('Não foi possível publicar o comentário. Tente novamente.');
+  } finally {
+    if (submitBtn) submitBtn.disabled = false;
+  }
 }
 
 function openGeneralPhotosModal() {
@@ -705,35 +689,50 @@ function openPlaceModal(id) {
 function showModal(id) { document.getElementById(id).classList.remove('hidden'); }
 function hideModal(id) { document.getElementById(id).classList.add('hidden'); }
 function hideAllModals() {
-  ['authModal', 'branchModal', 'generalPhotosModal', 'placeModal', 'editHeroModal', 'editBranchModal', 'editUnionModal', 'editPlaceModal'].forEach(hideModal);
+  ['authModal', 'branchModal', 'generalPhotosModal', 'placeModal', 'editHeroModal', 'editBranchModal', 'editUnionModal', 'editPlaceModal', 'editHistoryModal', 'editOriginModal'].forEach(hideModal);
 }
 
 /* ---------------------------------------------------------
-   6. AUTENTICAÇÃO DO ADMIN
+   6. AUTENTICAÇÃO DO ADMIN (Supabase Auth — login único)
    --------------------------------------------------------- */
 function goAdmin() {
   if (state.authed) {
     state.view = 'admin';
     renderViewToggle();
   } else {
-    document.getElementById('authInput').value = '';
+    document.getElementById('authEmail').value = '';
+    document.getElementById('authPassword').value = '';
     document.getElementById('authError').classList.add('hidden');
     showModal('authModal');
-    setTimeout(() => document.getElementById('authInput').focus(), 50);
+    setTimeout(() => document.getElementById('authEmail').focus(), 50);
   }
 }
 
-function submitAuth() {
-  const val = document.getElementById('authInput').value;
-  if (val === ADMIN_PASSWORD) {
-    state.authed = true;
+async function submitAuth() {
+  const email = document.getElementById('authEmail').value.trim();
+  const password = document.getElementById('authPassword').value;
+  const btn = document.getElementById('btnSubmitAuth');
+  const errEl = document.getElementById('authError');
+  errEl.classList.add('hidden');
+  btn.disabled = true;
+  try {
+    await api.signIn(email, password);
+    // state.authed é atualizado pelo listener onAuthStateChange (init()).
     hideModal('authModal');
     state.view = 'admin';
     renderViewToggle();
-  } else {
-    document.getElementById('authErrorText').textContent = 'Senha incorreta. Tente novamente.';
-    document.getElementById('authError').classList.remove('hidden');
+  } catch (err) {
+    document.getElementById('authErrorText').textContent = 'E-mail ou senha incorretos.';
+    errEl.classList.remove('hidden');
+  } finally {
+    btn.disabled = false;
   }
+}
+
+async function logout() {
+  await api.signOut();
+  state.view = 'public';
+  renderViewToggle();
 }
 
 function goPublic() { state.view = 'public'; renderViewToggle(); }
@@ -755,6 +754,11 @@ function renderAdminSummaries() {
   document.getElementById('unionSummary').innerHTML = u.story
     ? `${escapeHtml(truncate(u.story, 140))} · ${(u.photos || []).length} fotos gerais.`
     : 'Nenhuma história de união cadastrada ainda.';
+
+  const h = state.data.history || { text: '' };
+  document.getElementById('historySummary').innerHTML = h.text
+    ? escapeHtml(truncate(h.text, 140))
+    : 'Nenhum histórico cadastrado ainda.';
 }
 
 function renderAdminBranchList() {
@@ -786,19 +790,135 @@ function renderAdminPlaceList() {
   `).join('') || '<p class="admin-card-summary">Nenhum local cadastrado ainda.</p>';
 }
 
+function renderAdminOriginList() {
+  const list = document.getElementById('adminOriginList');
+  list.innerHTML = (state.data.origins || []).map(o => `
+    <div class="admin-list-item">
+      <div class="admin-list-item-name">${o.flag ? o.flag + ' ' : ''}${escapeHtml(o.name)}</div>
+      <div class="admin-list-actions">
+        <button type="button" class="btn btn-outline btn-sm" data-action="editOrigin" data-id="${o.id}"><span class="icon">${iconHtml('pencil')}</span> Editar</button>
+        <button type="button" class="btn-danger-icon" data-action="deleteOrigin" data-id="${o.id}"><span class="icon">${iconHtml('trash-2')}</span></button>
+      </div>
+    </div>
+  `).join('') || '<p class="admin-card-summary">Nenhuma origem cadastrada ainda.</p>';
+}
+
+function renderAdminMemoriasList() {
+  const list = document.getElementById('adminMemoriasList');
+  if (!list) return;
+  list.innerHTML = (state.memorias || []).map(m => `
+    <div class="admin-list-item">
+      <div>
+        <div class="admin-list-item-name">${escapeHtml(m.titulo)}</div>
+        <div class="admin-list-item-meta">${m.tipo === 'foto' ? 'Foto' : 'Documento'} · ${escapeHtml(formatDate(m.criadoEm))}</div>
+      </div>
+      <div class="admin-list-actions">
+        <button type="button" class="btn-danger-icon" data-action="deleteMemoria" data-id="${m.id}"><span class="icon">${iconHtml('trash-2')}</span></button>
+      </div>
+    </div>
+  `).join('') || '<p class="admin-card-summary">Nenhuma memória publicada ainda.</p>';
+}
+
 function renderSyncLabel() {
   const map = {
-    saving: { label: 'Salvando na nuvem…', color: '#b0842f', icon: 'loader' },
-    saved: { label: 'Salvo na nuvem', color: '#3f7a5a', icon: 'cloud-check' },
-    local: { label: 'Salvo neste navegador', color: '#8a8175', icon: 'hard-drive' },
-    error: { label: 'Falha ao sincronizar', color: '#a3453a', icon: 'cloud-off' },
-    '': { label: '', color: '#8a8175', icon: 'cloud' }
+    saving: { label: 'Salvando…', color: '#7d5e15', icon: 'loader' },
+    saved: { label: 'Salvo', color: '#1fa968', icon: 'cloud-check' },
+    error: { label: 'Falha ao salvar', color: '#a3453a', icon: 'cloud-off' },
+    '': { label: '', color: '#77907f', icon: 'cloud' }
   };
   const sy = map[state.syncStatus] || map[''];
   const el = document.getElementById('syncLabel');
   el.style.color = sy.color;
   el.innerHTML = sy.label ? `<span class="icon">${iconHtml(sy.icon)}</span> ${sy.label}` : '';
 }
+
+/* ---------------------------------------------------------
+   7b. CAMPOS DE FOTO COM UPLOAD (Supabase Storage)
+   --------------------------------------------------------- */
+// Liga um campo de foto ÚNICO e de id fixo (hero, capa do ramo, pai/mãe,
+// local, origem) a um <input type="file">. `getUrl`/`setUrl` leem/gravam
+// o valor em state.draft — como state.draft muda a cada edição, quem usa
+// isto precisa chamar `.refresh()` toda vez que reabrir o formulário com
+// um rascunho novo (o listener já fica ligado desde bindStaticEvents()).
+function wirePhotoPicker({ fileInputId, previewId, removeBtnId, progressWrapId, progressBarId, progressLabelId, statusId, getUrl, setUrl }) {
+  const fileInput = document.getElementById(fileInputId);
+  const preview = document.getElementById(previewId);
+  const removeBtn = removeBtnId ? document.getElementById(removeBtnId) : null;
+  const progressWrap = progressWrapId ? document.getElementById(progressWrapId) : null;
+  const progressBar = progressBarId ? document.getElementById(progressBarId) : null;
+  const progressLabel = progressLabelId ? document.getElementById(progressLabelId) : null;
+  const statusEl = statusId ? document.getElementById(statusId) : null;
+
+  function refresh() {
+    const url = getUrl();
+    preview.style.cssText = photoStyle(url);
+    if (removeBtn) removeBtn.classList.toggle('hidden', !url);
+  }
+  function setProgress(pct) {
+    if (progressWrap) progressWrap.classList.remove('hidden');
+    if (progressBar) progressBar.style.width = pct + '%';
+    if (progressLabel) progressLabel.textContent = 'Enviando… ' + pct + '%';
+    if (statusEl) statusEl.textContent = 'Enviando… ' + pct + '%';
+  }
+  function clearProgress() {
+    if (progressWrap) setTimeout(() => progressWrap.classList.add('hidden'), 700);
+    if (statusEl) setTimeout(() => { statusEl.textContent = ''; }, 700);
+  }
+
+  fileInput.addEventListener('change', async () => {
+    const file = fileInput.files[0];
+    if (!file) return;
+    setProgress(0);
+    try {
+      const url = await api.uploadPhoto(file, setProgress);
+      setUrl(url);
+      refresh();
+    } catch (err) {
+      console.error(err);
+      alert('Não foi possível enviar a foto: ' + err.message);
+    } finally {
+      fileInput.value = '';
+      clearProgress();
+    }
+  });
+
+  if (removeBtn) {
+    removeBtn.addEventListener('click', () => { setUrl(''); refresh(); });
+  }
+
+  return { refresh };
+}
+
+// Igual em espírito, mas pra fotos DENTRO de uma lista/subformulário
+// (filhos, cônjuge, álbum do ramo, álbum da união) — essas linhas são
+// recriadas a cada add/remove, então não dá pra usar ids fixos; delega
+// o "change" pro container inteiro e identifica a linha por
+// data-photo-field + data-index. `applyUrl(field, index, url)` grava o
+// resultado em state.draft e `rerender()` (normalmente a própria função
+// de renderização da lista) redesenha tudo, já mostrando a miniatura nova.
+function wireListPhotoUpload(containerId, applyUrl, rerender) {
+  document.getElementById(containerId).addEventListener('change', async (e) => {
+    const input = e.target.closest('[data-photo-field]');
+    if (!input) return;
+    const field = input.dataset.photoField;
+    const index = +input.dataset.index;
+    const file = input.files[0];
+    if (!file) return;
+    const status = document.querySelector(`#${containerId} [data-photo-status-for="${field}-${index}"]`);
+    if (status) status.textContent = 'Enviando… 0%';
+    try {
+      const url = await api.uploadPhoto(file, (pct) => { if (status) status.textContent = 'Enviando… ' + pct + '%'; });
+      applyUrl(field, index, url);
+      rerender();
+    } catch (err) {
+      console.error(err);
+      alert('Não foi possível enviar a foto: ' + err.message);
+      if (status) status.textContent = '';
+    }
+  });
+}
+
+let heroPhotoPicker, branchPhotoPicker, fatherPhotoPicker, motherPhotoPicker, placePhotoPicker, originPhotoPicker;
 
 /* ---------------------------------------------------------
    8. EDIÇÃO — HERO / MARCOS
@@ -809,6 +929,7 @@ function openEditHero() {
   state.draft = clone(state.data.hero);
   document.getElementById('editFamilyName').value = state.draft.familyName || '';
   document.getElementById('editMotto').value = state.draft.motto || '';
+  heroPhotoPicker.refresh();
   renderEncontrosEditList();
   showModal('editHeroModal');
 }
@@ -825,8 +946,30 @@ function renderEncontrosEditList() {
         </div>
         <input type="text" class="text-input" data-field="local" data-index="${i}" value="${escapeHtml(e.local)}" placeholder="Local">
         <textarea class="text-area" rows="2" data-field="desc" data-index="${i}" placeholder="Descrição">${escapeHtml(e.desc)}</textarea>
-        <input type="text" class="text-input photo-url-input" data-field="photo" data-index="${i}" value="${escapeHtml(e.photo)}" placeholder="URL da foto de capa (opcional)">
-        <textarea class="text-area" rows="2" data-field="photosText" data-index="${i}" placeholder="URLs das fotos do álbum, uma por linha (opcional)">${(e.photos || []).map(p => p.url).join('\n')}</textarea>
+
+        <div class="subform-subhead">Foto de capa (opcional)</div>
+        <div class="photo-row">
+          <span class="photo-row-preview" style="${photoStyle(e.photo)}"></span>
+          <label class="btn btn-chip">
+            <span class="icon" aria-hidden="true">${iconHtml('upload')}</span> ${e.photo ? 'Trocar foto' : 'Escolher foto'}
+            <input type="file" accept="image/*" class="visually-hidden-file" data-photo-field="photo" data-index="${i}">
+          </label>
+          <span class="photo-row-status" data-photo-status-for="photo-${i}"></span>
+        </div>
+
+        <div class="subform-subhead">Álbum do encontro (opcional)</div>
+        <div class="photo-mini-gallery">
+          ${(e.photos || []).map((p, pi) => `
+            <span class="photo-mini-item">
+              <span class="photo-mini-thumb" style="${photoStyle(p.url)}"></span>
+              <button type="button" class="photo-mini-remove" data-action="removeEncontroAlbumPhoto" data-index="${i}" data-photo-index="${pi}">${iconHtml('x')}</button>
+            </span>`).join('')}
+          <label class="btn btn-chip">
+            <span class="icon" aria-hidden="true">${iconHtml('upload')}</span> Adicionar fotos
+            <input type="file" accept="image/*" multiple class="visually-hidden-file" data-photo-field="albumAdd" data-index="${i}">
+          </label>
+          <span class="photo-row-status" data-photo-status-for="albumAdd-${i}"></span>
+        </div>
       </div>
       <button type="button" class="btn-danger-icon" data-action="removeEncontro" data-index="${i}"><span class="icon">${iconHtml('trash-2')}</span></button>
     </div>
@@ -834,10 +977,11 @@ function renderEncontrosEditList() {
 }
 
 function saveHero() {
-  const d = clone(state.data);
-  d.hero = state.draft;
-  hideModal('editHeroModal');
-  persist(d);
+  withSync(async () => {
+    state.data.hero = await api.saveHero(state.draft);
+    hideModal('editHeroModal');
+    renderAll();
+  });
 }
 
 /* ---------------------------------------------------------
@@ -846,7 +990,7 @@ function saveHero() {
 function newBranch() {
   state.editType = 'branch';
   state.editId = null;
-  state.draft = { id: uid('b'), name: '', photo: '', story: '', father: defaultPerson(), mother: defaultPerson(), children: [], photos: [], documents: [], comments: [] };
+  state.draft = { id: null, name: '', photo: '', story: '', father: defaultPerson(), mother: defaultPerson(), children: [], photos: [], documents: [], comments: [] };
   fillBranchForm('Novo ramo');
 }
 
@@ -862,25 +1006,26 @@ function editBranch(id) {
 function fillBranchForm(title) {
   document.getElementById('editBranchTitle').textContent = title;
   document.getElementById('editBranchName').value = state.draft.name || '';
-  document.getElementById('editBranchPhoto').value = state.draft.photo || '';
   document.getElementById('editBranchStory').value = state.draft.story || '';
+  branchPhotoPicker.refresh();
 
   state.draft.father = state.draft.father || defaultPerson();
   state.draft.mother = state.draft.mother || defaultPerson();
   document.getElementById('editFatherName').value = state.draft.father.name || '';
-  document.getElementById('editFatherPhoto').value = state.draft.father.photo || '';
   document.getElementById('editFatherBirth').value = state.draft.father.birth || '';
   document.getElementById('editFatherDeath').value = state.draft.father.death || '';
   document.getElementById('editFatherBio').value = state.draft.father.bio || '';
+  fatherPhotoPicker.refresh();
   document.getElementById('editMotherName').value = state.draft.mother.name || '';
-  document.getElementById('editMotherPhoto').value = state.draft.mother.photo || '';
   document.getElementById('editMotherBirth').value = state.draft.mother.birth || '';
   document.getElementById('editMotherDeath').value = state.draft.mother.death || '';
   document.getElementById('editMotherBio').value = state.draft.mother.bio || '';
+  motherPhotoPicker.refresh();
 
   renderChildrenEditList();
   renderBranchPhotosEditList();
   renderDocumentsEditList();
+  renderCommentsEditList();
   showModal('editBranchModal');
 }
 
@@ -893,9 +1038,14 @@ function renderChildrenEditList() {
     return `
     <div class="subform-item">
       <div class="subform-item-fields">
-        <div class="subform-item-row">
-          <input type="text" class="text-input" data-field="name" data-index="${i}" value="${escapeHtml(c.name)}" placeholder="Nome">
-          <input type="text" class="text-input photo-url-input" data-field="photo" data-index="${i}" value="${escapeHtml(c.photo)}" placeholder="URL da foto (opcional)">
+        <input type="text" class="text-input" data-field="name" data-index="${i}" value="${escapeHtml(c.name)}" placeholder="Nome">
+        <div class="photo-row">
+          <span class="photo-row-preview" style="${photoStyle(c.photo)}"></span>
+          <label class="btn btn-chip">
+            <span class="icon" aria-hidden="true">${iconHtml('upload')}</span> ${c.photo ? 'Trocar foto' : 'Foto (opcional)'}
+            <input type="file" accept="image/*" class="visually-hidden-file" data-photo-field="photo" data-index="${i}">
+          </label>
+          <span class="photo-row-status" data-photo-status-for="photo-${i}"></span>
         </div>
         <div class="subform-item-row">
           <input type="text" class="text-input" data-field="birth" data-index="${i}" value="${escapeHtml(c.birth)}" placeholder="Nascimento">
@@ -904,9 +1054,14 @@ function renderChildrenEditList() {
         <textarea class="text-area" rows="2" data-field="bio" data-index="${i}" placeholder="Resumo da história">${escapeHtml(c.bio)}</textarea>
 
         <div class="subform-subhead">Cônjuge (opcional)</div>
-        <div class="subform-item-row">
-          <input type="text" class="text-input" data-field="spouseName" data-index="${i}" value="${escapeHtml(spouse.name)}" placeholder="Nome do cônjuge">
-          <input type="text" class="text-input photo-url-input" data-field="spousePhoto" data-index="${i}" value="${escapeHtml(spouse.photo)}" placeholder="URL da foto (opcional)">
+        <input type="text" class="text-input" data-field="spouseName" data-index="${i}" value="${escapeHtml(spouse.name)}" placeholder="Nome do cônjuge">
+        <div class="photo-row">
+          <span class="photo-row-preview" style="${photoStyle(spouse.photo)}"></span>
+          <label class="btn btn-chip">
+            <span class="icon" aria-hidden="true">${iconHtml('upload')}</span> ${spouse.photo ? 'Trocar foto' : 'Foto (opcional)'}
+            <input type="file" accept="image/*" class="visually-hidden-file" data-photo-field="spousePhoto" data-index="${i}">
+          </label>
+          <span class="photo-row-status" data-photo-status-for="spousePhoto-${i}"></span>
         </div>
         <div class="subform-item-row">
           <input type="text" class="text-input" data-field="spouseBirth" data-index="${i}" value="${escapeHtml(spouse.birth)}" placeholder="Nascimento">
@@ -927,7 +1082,14 @@ function renderBranchPhotosEditList() {
   list.innerHTML = photos.map((p, i) => `
     <div class="subform-item">
       <div class="subform-item-fields">
-        <input type="text" class="text-input photo-url-input" data-field="url" data-index="${i}" value="${escapeHtml(p.url)}" placeholder="URL da foto">
+        <div class="photo-row">
+          <span class="photo-row-preview" style="${photoStyle(p.url)}"></span>
+          <label class="btn btn-chip">
+            <span class="icon" aria-hidden="true">${iconHtml('upload')}</span> ${p.url ? 'Trocar foto' : 'Escolher foto'}
+            <input type="file" accept="image/*" class="visually-hidden-file" data-photo-field="url" data-index="${i}">
+          </label>
+          <span class="photo-row-status" data-photo-status-for="url-${i}"></span>
+        </div>
         <input type="text" class="text-input" data-field="caption" data-index="${i}" value="${escapeHtml(p.caption)}" placeholder="Legenda (opcional)">
       </div>
       <button type="button" class="btn-danger-icon" data-action="removeBranchPhoto" data-index="${i}"><span class="icon">${iconHtml('trash-2')}</span></button>
@@ -942,26 +1104,71 @@ function renderDocumentsEditList() {
     <div class="subform-item">
       <div class="subform-item-fields">
         <input type="text" class="text-input" data-field="name" data-index="${i}" value="${escapeHtml(d.name)}" placeholder="Nome do documento">
-        <input type="text" class="text-input photo-url-input" data-field="url" data-index="${i}" value="${escapeHtml(d.url)}" placeholder="URL do documento">
+        <div class="photo-row">
+          ${d.url ? `<a class="document-item" href="${escapeHtml(d.url)}" target="_blank" rel="noopener"><span class="icon">${iconHtml('file-text')}</span><span>Ver arquivo atual</span></a>` : ''}
+          <label class="btn btn-chip">
+            <span class="icon" aria-hidden="true">${iconHtml('upload')}</span> ${d.url ? 'Trocar arquivo (PDF)' : 'Escolher arquivo (PDF)'}
+            <input type="file" accept="application/pdf,.pdf" class="visually-hidden-file" data-photo-field="url" data-index="${i}">
+          </label>
+          <span class="photo-row-status" data-photo-status-for="url-${i}"></span>
+        </div>
       </div>
       <button type="button" class="btn-danger-icon" data-action="removeDocument" data-index="${i}"><span class="icon">${iconHtml('trash-2')}</span></button>
     </div>
   `).join('') || '<p class="admin-card-summary">Nenhum documento ainda. Clique em "Documento" para adicionar.</p>';
 }
 
+// Lista somente-leitura (sem edição de texto) — o admin só pode apagar um
+// comentário publicado por um visitante, não alterá-lo. Ver deleteComment().
+function renderCommentsEditList() {
+  const list = document.getElementById('commentsEditList');
+  const comments = state.draft.comments || [];
+  list.innerHTML = comments.map((c) => `
+    <div class="subform-item">
+      <div class="subform-item-fields">
+        <div class="comment-item">
+          <div class="comment-head"><span class="comment-name">${escapeHtml(c.name)}</span><span class="comment-date">${escapeHtml(c.date)}</span></div>
+          <p class="comment-text">${escapeHtml(c.text)}</p>
+        </div>
+      </div>
+      <button type="button" class="btn-danger-icon" data-action="deleteComment" data-id="${c.id}"><span class="icon">${iconHtml('trash-2')}</span></button>
+    </div>
+  `).join('') || '<p class="admin-card-summary">Nenhum comentário ainda.</p>';
+}
+
 function saveBranch() {
-  const d = clone(state.data);
-  const i = d.branches.findIndex(b => b.id === state.draft.id);
-  if (i >= 0) d.branches[i] = state.draft; else d.branches.push(state.draft);
-  hideModal('editBranchModal');
-  persist(d);
+  withSync(async () => {
+    const saved = await api.saveBranch(state.draft);
+    const i = state.data.branches.findIndex(b => b.id === state.draft.id);
+    if (state.draft.id && i >= 0) state.data.branches[i] = saved; else state.data.branches.push(saved);
+    hideModal('editBranchModal');
+    renderAll();
+  });
 }
 
 function deleteBranch(id) {
   if (!confirm('Remover este ramo?')) return;
-  const d = clone(state.data);
-  d.branches = d.branches.filter(b => b.id !== id);
-  persist(d);
+  withSync(async () => {
+    await api.deleteBranch(id);
+    state.data.branches = state.data.branches.filter(b => b.id !== id);
+    renderAll();
+  });
+}
+
+// Apaga um comentário publicado por um visitante (moderação). Diferente de
+// removeDocument/removeChild etc., não fica só no state.draft esperando o
+// "Salvar" do ramo — branch_comments é sua própria tabela (ver
+// api.deleteComment), então a exclusão precisa ir direto ao Supabase.
+function deleteComment(id) {
+  if (!confirm('Remover este comentário?')) return;
+  withSync(async () => {
+    await api.deleteComment(id);
+    state.draft.comments = (state.draft.comments || []).filter(c => c.id !== id);
+    renderCommentsEditList();
+    const b = state.data.branches.find(x => x.id === state.draft.id);
+    if (b) b.comments = (b.comments || []).filter(c => c.id !== id);
+    renderAll();
+  });
 }
 
 /* ---------------------------------------------------------
@@ -981,7 +1188,14 @@ function renderUnionPhotosEditList() {
   list.innerHTML = photos.map((p, i) => `
     <div class="subform-item">
       <div class="subform-item-fields">
-        <input type="text" class="text-input photo-url-input" data-field="url" data-index="${i}" value="${escapeHtml(p.url)}" placeholder="URL da foto">
+        <div class="photo-row">
+          <span class="photo-row-preview" style="${photoStyle(p.url)}"></span>
+          <label class="btn btn-chip">
+            <span class="icon" aria-hidden="true">${iconHtml('upload')}</span> ${p.url ? 'Trocar foto' : 'Escolher foto'}
+            <input type="file" accept="image/*" class="visually-hidden-file" data-photo-field="url" data-index="${i}">
+          </label>
+          <span class="photo-row-status" data-photo-status-for="url-${i}"></span>
+        </div>
         <input type="text" class="text-input" data-field="caption" data-index="${i}" value="${escapeHtml(p.caption)}" placeholder="Legenda (opcional)">
       </div>
       <button type="button" class="btn-danger-icon" data-action="removeUnionPhoto" data-index="${i}"><span class="icon">${iconHtml('trash-2')}</span></button>
@@ -990,10 +1204,29 @@ function renderUnionPhotosEditList() {
 }
 
 function saveUnion() {
-  const d = clone(state.data);
-  d.familyUnion = state.draft;
-  hideModal('editUnionModal');
-  persist(d);
+  withSync(async () => {
+    state.data.familyUnion = await api.saveUnion(state.draft);
+    hideModal('editUnionModal');
+    renderAll();
+  });
+}
+
+/* ---------------------------------------------------------
+   10b. EDIÇÃO — HISTÓRIA DA FAMÍLIA
+   --------------------------------------------------------- */
+function openEditHistory() {
+  state.editType = 'history';
+  state.draft = clone(state.data.history || { text: '' });
+  document.getElementById('editHistoryText').value = state.draft.text || '';
+  showModal('editHistoryModal');
+}
+
+function saveHistory() {
+  withSync(async () => {
+    state.data.history = await api.saveHistory(state.draft);
+    hideModal('editHistoryModal');
+    renderAll();
+  });
 }
 
 /* ---------------------------------------------------------
@@ -1002,7 +1235,7 @@ function saveUnion() {
 function newPlace() {
   state.editType = 'place';
   state.editId = null;
-  state.draft = { id: uid('p'), name: '', photo: '', story: '', importance: '' };
+  state.draft = { id: null, name: '', photo: '', story: '', importance: '' };
   fillPlaceForm('Novo local');
 }
 
@@ -1018,54 +1251,152 @@ function editPlace(id) {
 function fillPlaceForm(title) {
   document.getElementById('editPlaceTitle').textContent = title;
   document.getElementById('editPlaceName').value = state.draft.name || '';
-  document.getElementById('editPlacePhoto').value = state.draft.photo || '';
   document.getElementById('editPlaceStory').value = state.draft.story || '';
   document.getElementById('editPlaceImportance').value = state.draft.importance || '';
+  placePhotoPicker.refresh();
   showModal('editPlaceModal');
 }
 
 function savePlace() {
-  const d = clone(state.data);
-  const i = d.places.findIndex(p => p.id === state.draft.id);
-  if (i >= 0) d.places[i] = state.draft; else d.places.push(state.draft);
-  hideModal('editPlaceModal');
-  persist(d);
+  withSync(async () => {
+    const saved = await api.savePlace(state.draft);
+    const i = state.data.places.findIndex(p => p.id === state.draft.id);
+    if (state.draft.id && i >= 0) state.data.places[i] = saved; else state.data.places.push(saved);
+    hideModal('editPlaceModal');
+    renderAll();
+  });
 }
 
 function deletePlace(id) {
   if (!confirm('Remover este local?')) return;
-  const d = clone(state.data);
-  d.places = d.places.filter(p => p.id !== id);
-  persist(d);
+  withSync(async () => {
+    await api.deletePlace(id);
+    state.data.places = state.data.places.filter(p => p.id !== id);
+    renderAll();
+  });
 }
 
 /* ---------------------------------------------------------
-   12. CONFIGURAÇÃO DA NUVEM
+   11b. EDIÇÃO — PAÍSES DE ORIGEM DOS ANCESTRAIS
    --------------------------------------------------------- */
-function saveCfg() {
-  const cfg = {
-    binId: document.getElementById('cfgBinId').value.trim(),
-    key: document.getElementById('cfgKey').value.trim()
-  };
-  state.cfg = cfg;
-  try { localStorage.setItem(LS_CFG_KEY, JSON.stringify(cfg)); } catch (e) { }
-  loadData(cfg).then(renderAll);
+function newOrigin() {
+  state.editType = 'origin';
+  state.editId = null;
+  state.draft = { id: null, flag: '', name: '', photo: '', story: '' };
+  fillOriginForm('Novo país de origem');
 }
 
-function reloadData() { loadData(state.cfg).then(renderAll); }
+function editOrigin(id) {
+  const o = (state.data.origins || []).find(x => x.id === id);
+  if (!o) return;
+  state.editType = 'origin';
+  state.editId = id;
+  state.draft = clone(o);
+  fillOriginForm('Editar país de origem');
+}
+
+function fillOriginForm(title) {
+  document.getElementById('editOriginTitle').textContent = title;
+  document.getElementById('editOriginFlag').value = state.draft.flag || '';
+  document.getElementById('editOriginName').value = state.draft.name || '';
+  document.getElementById('editOriginStory').value = state.draft.story || '';
+  originPhotoPicker.refresh();
+  showModal('editOriginModal');
+}
+
+function saveOrigin() {
+  withSync(async () => {
+    const saved = await api.saveOrigin(state.draft);
+    state.data.origins = state.data.origins || [];
+    const i = state.data.origins.findIndex(o => o.id === state.draft.id);
+    if (state.draft.id && i >= 0) state.data.origins[i] = saved; else state.data.origins.push(saved);
+    hideModal('editOriginModal');
+    renderAll();
+  });
+}
+
+function deleteOrigin(id) {
+  if (!confirm('Remover este país de origem?')) return;
+  withSync(async () => {
+    await api.deleteOrigin(id);
+    state.data.origins = state.data.origins.filter(o => o.id !== id);
+    renderAll();
+  });
+}
 
 /* ---------------------------------------------------------
-   13. EVENTOS ESTÁTICOS (botões fixos do HTML)
+   11c. MEMÓRIAS — UPLOAD (Supabase Storage) E EXCLUSÃO
+   --------------------------------------------------------- */
+async function submitMemoriaForm(e) {
+  e.preventDefault();
+  const titulo = document.getElementById('memoriaTitulo').value.trim();
+  const descricao = document.getElementById('memoriaDescricao').value.trim();
+  const fileInput = document.getElementById('memoriaFile');
+  const file = fileInput.files[0];
+  if (!titulo || !file) { alert('Preencha o título e escolha um arquivo (foto ou PDF).'); return; }
+
+  const tipo = file.type && file.type.startsWith('image/') ? 'foto' : 'documento';
+  const wrap = document.getElementById('memoriaProgressWrap');
+  const bar = document.getElementById('memoriaProgressBar');
+  const label = document.getElementById('memoriaProgressLabel');
+  const submitBtn = document.getElementById('btnSubmitMemoria');
+
+  wrap.classList.remove('hidden');
+  bar.style.width = '0%';
+  label.textContent = 'Enviando… 0%';
+  submitBtn.disabled = true;
+
+  try {
+    const url = await api.uploadMemoriaFile(file, (pct) => {
+      bar.style.width = pct + '%';
+      label.textContent = 'Enviando… ' + pct + '%';
+    });
+    const memoria = await api.addMemoria({ titulo, descricao, urlArquivo: url, tipo });
+    // Atualiza a UI local na hora (não depender só da latência do Realtime
+    // pra quem acabou de publicar ver o resultado imediatamente).
+    state.memorias.unshift(memoria);
+    renderMemorias();
+    renderAdminMemoriasList();
+    e.target.reset();
+    label.textContent = 'Publicado!';
+  } catch (err) {
+    console.error(err);
+    alert('Não foi possível publicar a memória: ' + err.message);
+    label.textContent = '';
+  } finally {
+    submitBtn.disabled = false;
+    setTimeout(() => wrap.classList.add('hidden'), 1600);
+  }
+}
+
+function deleteMemoria(id) {
+  const m = (state.memorias || []).find(x => x.id === id);
+  if (!m) return;
+  if (!confirm('Remover esta memória?')) return;
+  api.deleteMemoria(id, m.url)
+    .then(() => {
+      state.memorias = state.memorias.filter(x => x.id !== id);
+      renderMemorias();
+      renderAdminMemoriasList();
+    })
+    .catch((err) => {
+      console.error(err);
+      alert('Não foi possível remover. Veja o console para detalhes.');
+    });
+}
+
+/* ---------------------------------------------------------
+   12. EVENTOS ESTÁTICOS (botões fixos do HTML)
    --------------------------------------------------------- */
 function bindStaticEvents() {
-  document.getElementById('btnGoAdmin').addEventListener('click', goAdmin);
-  document.getElementById('btnGoAdminMobile').addEventListener('click', () => { closeMobileNav(); goAdmin(); });
   document.getElementById('btnGoAdminFooter').addEventListener('click', goAdmin);
   document.getElementById('btnGoPublic').addEventListener('click', goPublic);
+  document.getElementById('btnLogout').addEventListener('click', logout);
 
   document.getElementById('btnCancelAuth').addEventListener('click', () => hideModal('authModal'));
   document.getElementById('btnSubmitAuth').addEventListener('click', submitAuth);
-  document.getElementById('authInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') submitAuth(); });
+  document.getElementById('authEmail').addEventListener('keydown', (e) => { if (e.key === 'Enter') submitAuth(); });
+  document.getElementById('authPassword').addEventListener('keydown', (e) => { if (e.key === 'Enter') submitAuth(); });
 
   document.getElementById('btnCloseBranchModal').addEventListener('click', () => hideModal('branchModal'));
   document.getElementById('btnToggleFamilyTree').addEventListener('click', () => {
@@ -1090,14 +1421,56 @@ function bindStaticEvents() {
   });
   document.getElementById('editFamilyName').addEventListener('input', (e) => { state.draft.familyName = e.target.value; });
   document.getElementById('editMotto').addEventListener('input', (e) => { state.draft.motto = e.target.value; });
+  heroPhotoPicker = wirePhotoPicker({
+    fileInputId: 'editHeroPhotoFile', previewId: 'editHeroPhotoPreview', removeBtnId: 'editHeroPhotoRemove',
+    progressWrapId: 'editHeroPhotoProgress', progressBarId: 'editHeroPhotoProgressBar', progressLabelId: 'editHeroPhotoProgressLabel',
+    getUrl: () => state.draft.photo, setUrl: (url) => { state.draft.photo = url; }
+  });
   document.getElementById('encontrosEditList').addEventListener('input', (e) => {
     const field = e.target.dataset.field, idx = e.target.dataset.index;
     if (field === undefined || idx === undefined) return;
-    if (field === 'photosText') {
-      state.draft.encontros[+idx].photos = e.target.value.split('\n').map(s => s.trim()).filter(Boolean).map(url => ({ url }));
+    state.draft.encontros[+idx][field] = e.target.value;
+  });
+  document.getElementById('encontrosEditList').addEventListener('change', async (e) => {
+    const input = e.target.closest('[data-photo-field]');
+    if (!input) return;
+    const field = input.dataset.photoField;
+    const index = +input.dataset.index;
+    const encontro = state.draft.encontros[index];
+
+    if (field === 'photo') {
+      const file = input.files[0];
+      if (!file) return;
+      const status = document.querySelector(`#encontrosEditList [data-photo-status-for="photo-${index}"]`);
+      if (status) status.textContent = 'Enviando… 0%';
+      try {
+        const url = await api.uploadPhoto(file, (pct) => { if (status) status.textContent = 'Enviando… ' + pct + '%'; });
+        encontro.photo = url;
+      } catch (err) {
+        console.error(err);
+        alert('Não foi possível enviar a foto: ' + err.message);
+      }
+      renderEncontrosEditList();
       return;
     }
-    state.draft.encontros[+idx][field] = e.target.value;
+
+    if (field === 'albumAdd') {
+      const files = Array.from(input.files || []);
+      if (!files.length) return;
+      encontro.photos = encontro.photos || [];
+      const status = document.querySelector(`#encontrosEditList [data-photo-status-for="albumAdd-${index}"]`);
+      try {
+        for (let i = 0; i < files.length; i++) {
+          if (status) status.textContent = `Enviando ${i + 1} de ${files.length}…`;
+          const url = await api.uploadPhoto(files[i]);
+          encontro.photos.push({ url });
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Não foi possível enviar uma das fotos: ' + err.message);
+      }
+      renderEncontrosEditList();
+    }
   });
 
   document.getElementById('btnNewBranch').addEventListener('click', newBranch);
@@ -1105,26 +1478,36 @@ function bindStaticEvents() {
   document.getElementById('btnCancelEditBranch2').addEventListener('click', () => hideModal('editBranchModal'));
   document.getElementById('btnSaveBranch').addEventListener('click', saveBranch);
   document.getElementById('editBranchName').addEventListener('input', (e) => { state.draft.name = e.target.value; });
-  document.getElementById('editBranchPhoto').addEventListener('input', (e) => { state.draft.photo = e.target.value; });
   document.getElementById('editBranchStory').addEventListener('input', (e) => { state.draft.story = e.target.value; });
+  branchPhotoPicker = wirePhotoPicker({
+    fileInputId: 'editBranchPhotoFile', previewId: 'editBranchPhotoPreview', removeBtnId: 'editBranchPhotoRemove',
+    progressWrapId: 'editBranchPhotoProgress', progressBarId: 'editBranchPhotoProgressBar', progressLabelId: 'editBranchPhotoProgressLabel',
+    getUrl: () => state.draft.photo, setUrl: (url) => { state.draft.photo = url; }
+  });
 
   document.getElementById('editFatherName').addEventListener('input', (e) => { state.draft.father.name = e.target.value; });
-  document.getElementById('editFatherPhoto').addEventListener('input', (e) => { state.draft.father.photo = e.target.value; });
   document.getElementById('editFatherBirth').addEventListener('input', (e) => { state.draft.father.birth = e.target.value; });
   document.getElementById('editFatherDeath').addEventListener('input', (e) => { state.draft.father.death = e.target.value; });
   document.getElementById('editFatherBio').addEventListener('input', (e) => { state.draft.father.bio = e.target.value; });
+  fatherPhotoPicker = wirePhotoPicker({
+    fileInputId: 'editFatherPhotoFile', previewId: 'editFatherPhotoPreview', removeBtnId: 'editFatherPhotoRemove', statusId: 'editFatherPhotoStatus',
+    getUrl: () => state.draft.father.photo, setUrl: (url) => { state.draft.father.photo = url; }
+  });
   document.getElementById('editMotherName').addEventListener('input', (e) => { state.draft.mother.name = e.target.value; });
-  document.getElementById('editMotherPhoto').addEventListener('input', (e) => { state.draft.mother.photo = e.target.value; });
   document.getElementById('editMotherBirth').addEventListener('input', (e) => { state.draft.mother.birth = e.target.value; });
   document.getElementById('editMotherDeath').addEventListener('input', (e) => { state.draft.mother.death = e.target.value; });
   document.getElementById('editMotherBio').addEventListener('input', (e) => { state.draft.mother.bio = e.target.value; });
+  motherPhotoPicker = wirePhotoPicker({
+    fileInputId: 'editMotherPhotoFile', previewId: 'editMotherPhotoPreview', removeBtnId: 'editMotherPhotoRemove', statusId: 'editMotherPhotoStatus',
+    getUrl: () => state.draft.mother.photo, setUrl: (url) => { state.draft.mother.photo = url; }
+  });
 
   document.getElementById('btnAddChild').addEventListener('click', () => {
     state.draft.children = state.draft.children || [];
     state.draft.children.push(defaultChild());
     renderChildrenEditList();
   });
-  const SPOUSE_FIELD_MAP = { spouseName: 'name', spousePhoto: 'photo', spouseBirth: 'birth', spouseDeath: 'death' };
+  const SPOUSE_FIELD_MAP = { spouseName: 'name', spouseBirth: 'birth', spouseDeath: 'death' };
   document.getElementById('childrenEditList').addEventListener('input', (e) => {
     const field = e.target.dataset.field, idx = e.target.dataset.index;
     if (field === undefined || idx === undefined) return;
@@ -1141,6 +1524,11 @@ function bindStaticEvents() {
       child[field] = e.target.value;
     }
   });
+  wireListPhotoUpload('childrenEditList', (field, index, url) => {
+    const child = state.draft.children[index];
+    if (field === 'spousePhoto') { child.spouse = child.spouse || defaultPerson(); child.spouse.photo = url; }
+    else { child.photo = url; }
+  }, renderChildrenEditList);
 
   document.getElementById('btnAddBranchPhoto').addEventListener('click', () => {
     state.draft.photos = state.draft.photos || [];
@@ -1152,6 +1540,9 @@ function bindStaticEvents() {
     if (field === undefined || idx === undefined) return;
     state.draft.photos[+idx][field] = e.target.value;
   });
+  wireListPhotoUpload('branchPhotosEditList', (field, index, url) => {
+    state.draft.photos[index].url = url;
+  }, renderBranchPhotosEditList);
 
   document.getElementById('btnAddDocument').addEventListener('click', () => {
     state.draft.documents = state.draft.documents || [];
@@ -1163,6 +1554,9 @@ function bindStaticEvents() {
     if (field === undefined || idx === undefined) return;
     state.draft.documents[+idx][field] = e.target.value;
   });
+  wireListPhotoUpload('documentsEditList', (field, index, url) => {
+    state.draft.documents[index].url = url;
+  }, renderDocumentsEditList);
 
   document.getElementById('btnEditUnion').addEventListener('click', openEditUnion);
   document.getElementById('btnCancelEditUnion').addEventListener('click', () => hideModal('editUnionModal'));
@@ -1179,18 +1573,43 @@ function bindStaticEvents() {
     if (field === undefined || idx === undefined) return;
     state.draft.photos[+idx][field] = e.target.value;
   });
+  wireListPhotoUpload('unionPhotosEditList', (field, index, url) => {
+    state.draft.photos[index].url = url;
+  }, renderUnionPhotosEditList);
+
+  document.getElementById('btnEditHistory').addEventListener('click', openEditHistory);
+  document.getElementById('btnCancelEditHistory').addEventListener('click', () => hideModal('editHistoryModal'));
+  document.getElementById('btnCancelEditHistory2').addEventListener('click', () => hideModal('editHistoryModal'));
+  document.getElementById('btnSaveHistory').addEventListener('click', saveHistory);
+  document.getElementById('editHistoryText').addEventListener('input', (e) => { state.draft.text = e.target.value; });
+
+  document.getElementById('btnNewOrigin').addEventListener('click', newOrigin);
+  document.getElementById('btnCancelEditOrigin').addEventListener('click', () => hideModal('editOriginModal'));
+  document.getElementById('btnCancelEditOrigin2').addEventListener('click', () => hideModal('editOriginModal'));
+  document.getElementById('btnSaveOrigin').addEventListener('click', saveOrigin);
+  document.getElementById('editOriginFlag').addEventListener('change', (e) => { state.draft.flag = e.target.value; });
+  document.getElementById('editOriginName').addEventListener('input', (e) => { state.draft.name = e.target.value; });
+  document.getElementById('editOriginStory').addEventListener('input', (e) => { state.draft.story = e.target.value; });
+  originPhotoPicker = wirePhotoPicker({
+    fileInputId: 'editOriginPhotoFile', previewId: 'editOriginPhotoPreview', removeBtnId: 'editOriginPhotoRemove',
+    progressWrapId: 'editOriginPhotoProgress', progressBarId: 'editOriginPhotoProgressBar', progressLabelId: 'editOriginPhotoProgressLabel',
+    getUrl: () => state.draft.photo, setUrl: (url) => { state.draft.photo = url; }
+  });
 
   document.getElementById('btnNewPlace').addEventListener('click', newPlace);
   document.getElementById('btnCancelEditPlace').addEventListener('click', () => hideModal('editPlaceModal'));
   document.getElementById('btnCancelEditPlace2').addEventListener('click', () => hideModal('editPlaceModal'));
   document.getElementById('btnSavePlace').addEventListener('click', savePlace);
   document.getElementById('editPlaceName').addEventListener('input', (e) => { state.draft.name = e.target.value; });
-  document.getElementById('editPlacePhoto').addEventListener('input', (e) => { state.draft.photo = e.target.value; });
   document.getElementById('editPlaceStory').addEventListener('input', (e) => { state.draft.story = e.target.value; });
   document.getElementById('editPlaceImportance').addEventListener('input', (e) => { state.draft.importance = e.target.value; });
+  placePhotoPicker = wirePhotoPicker({
+    fileInputId: 'editPlacePhotoFile', previewId: 'editPlacePhotoPreview', removeBtnId: 'editPlacePhotoRemove',
+    progressWrapId: 'editPlacePhotoProgress', progressBarId: 'editPlacePhotoProgressBar', progressLabelId: 'editPlacePhotoProgressLabel',
+    getUrl: () => state.draft.photo, setUrl: (url) => { state.draft.photo = url; }
+  });
 
-  document.getElementById('btnSaveCfg').addEventListener('click', saveCfg);
-  document.getElementById('btnReloadData').addEventListener('click', reloadData);
+  document.getElementById('memoriaForm').addEventListener('submit', submitMemoriaForm);
 
   document.getElementById('branchPrev').addEventListener('click', () => scrollBranches(-1));
   document.getElementById('branchNext').addEventListener('click', () => scrollBranches(1));
@@ -1211,8 +1630,19 @@ function bindStaticEvents() {
       case 'deleteBranch': deleteBranch(id); break;
       case 'editPlace': editPlace(id); break;
       case 'deletePlace': deletePlace(id); break;
+      case 'editOrigin': editOrigin(id); break;
+      case 'deleteOrigin': deleteOrigin(id); break;
+      case 'deleteMemoria': deleteMemoria(id); break;
+      case 'selectOrigin':
+        state.activeOriginIndex = +index;
+        renderOrigins();
+        break;
       case 'removeEncontro':
         state.draft.encontros.splice(+index, 1);
+        renderEncontrosEditList();
+        break;
+      case 'removeEncontroAlbumPhoto':
+        state.draft.encontros[+index].photos.splice(+target.dataset.photoIndex, 1);
         renderEncontrosEditList();
         break;
       case 'selectEncontro':
@@ -1231,6 +1661,7 @@ function bindStaticEvents() {
         state.draft.documents.splice(+index, 1);
         renderDocumentsEditList();
         break;
+      case 'deleteComment': deleteComment(id); break;
       case 'removeUnionPhoto':
         state.draft.photos.splice(+index, 1);
         renderUnionPhotosEditList();
@@ -1258,15 +1689,25 @@ function scrollBranches(dir) {
 }
 
 /* ---------------------------------------------------------
-   14. INICIALIZAÇÃO
+   13. INICIALIZAÇÃO
    --------------------------------------------------------- */
 async function init() {
-  state.cfg = loadCfgFromStorage();
-  document.getElementById('cfgBinId').value = state.cfg.binId;
-  document.getElementById('cfgKey').value = state.cfg.key;
-
   bindStaticEvents();
-  await loadData(state.cfg);
+
+  // Sessão de admin: pega o estado atual e escuta mudanças (login,
+  // logout, expiração/renovação de token) pra manter state.authed em dia.
+  state.session = await api.getSession();
+  state.authed = !!state.session;
+  api.onAuthStateChange((session) => {
+    state.session = session;
+    state.authed = !!session;
+    if (!session && state.view === 'admin') { state.view = 'public'; renderViewToggle(); }
+  });
+
+  await loadData();
+  await loadMemoriasData();
+  api.subscribeMemorias(() => { loadMemoriasData(); }); // mantém a lista pública em tempo real
+
   renderAll();
 }
 
