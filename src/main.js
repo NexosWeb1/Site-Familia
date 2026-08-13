@@ -137,9 +137,10 @@ async function loadData() {
   setLoading(true);
   try {
     state.data = await api.loadAllData();
+    document.getElementById('loadErrorBanner').classList.add('hidden');
   } catch (err) {
     console.error('Falha ao carregar dados do Supabase:', err);
-    alert('Não foi possível carregar os dados do site. Verifique sua conexão e as credenciais do Supabase (.env). Veja o console para detalhes.');
+    document.getElementById('loadErrorBanner').classList.remove('hidden');
     state.data = { hero: { familyName: '', motto: '', photo: '', encontros: [] }, branches: [], familyUnion: { story: '', photos: [] }, history: { text: '' }, places: [], origins: [] };
   }
   setLoading(false);
@@ -1389,6 +1390,8 @@ function deleteMemoria(id) {
    12. EVENTOS ESTÁTICOS (botões fixos do HTML)
    --------------------------------------------------------- */
 function bindStaticEvents() {
+  document.getElementById('btnRetryLoad').addEventListener('click', async () => { await loadData(); renderAll(); });
+
   document.getElementById('btnGoAdminFooter').addEventListener('click', goAdmin);
   document.getElementById('btnGoPublic').addEventListener('click', goPublic);
   document.getElementById('btnLogout').addEventListener('click', logout);
@@ -1704,8 +1707,7 @@ async function init() {
     if (!session && state.view === 'admin') { state.view = 'public'; renderViewToggle(); }
   });
 
-  await loadData();
-  await loadMemoriasData();
+  await Promise.all([loadData(), loadMemoriasData()]);
   api.subscribeMemorias(() => { loadMemoriasData(); }); // mantém a lista pública em tempo real
 
   renderAll();

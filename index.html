@@ -6,8 +6,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Memórias &amp; Legado — Site de Memória e História Familiar</title>
   <meta name="description" content="Um arquivo vivo de memórias, ramos genealógicos e locais marcantes da família.">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://yzrlfjxhtoacbvyvlbkc.supabase.co" crossorigin>
   <link
     href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&family=Nunito+Sans:wght@400;600;700;800&display=swap"
     rel="stylesheet">
@@ -20,6 +22,12 @@
   <div id="loadingOverlay" class="loading-overlay">
     <span class="spinner" aria-hidden="true"></span>
     <span class="loading-text">Recuperando as memórias da família…</span>
+  </div>
+
+  <!-- ===================== ERRO DE CARREGAMENTO ===================== -->
+  <div id="loadErrorBanner" class="load-error-banner hidden" role="alert">
+    <span>${icon:alert-circle} Não foi possível carregar os dados do site. Verifique sua conexão.</span>
+    <button type="button" id="btnRetryLoad">Tentar novamente</button>
   </div>
 
   <!-- ===================== HEADER ===================== -->
