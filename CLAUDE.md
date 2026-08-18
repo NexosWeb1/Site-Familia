@@ -91,18 +91,54 @@ fields" below, `renderDocumentsEditList()` in `src/main.js`.
   UUIDs (harmless — nothing references an encontro's id from elsewhere).
 - `branches` — one row per family branch (currently Arruda/Pinto/Leda —
   branch names deliberately have no "Os" article, e.g. `'Arruda'` not
-  `'Os Arruda'`). Columns: `name`, `photo_url`, `story`, `father`/`mother`
-  (jsonb `{ name, photo, birth, death, bio }` each — a branch can have
-  only a mother, only a father, or both), `children` (jsonb array, same
-  person shape plus optional `spouse` and `children[]` (grandkids) —
-  grandkids don't get their own spouse/children), `photos` (jsonb
-  `{url, caption}[]`), `documents` (jsonb `{name, url}[]`). In the public
+  `'Os Arruda'`). Columns: `name`, `photo_url`, `story`, `couples` (jsonb
+  array — a branch can have any number of couples of the same generation,
+  e.g. the client's parents *and* an aunt/uncle couple side by side, each
+  with their own children). Each couple is
+  `{ father, mother, children }`: `father`/`mother` are `{ name, photo,
+  birth, death, bio }` (a couple can have only a mother, only a father, or
+  both), `children` is a jsonb array, same person shape plus optional
+  `spouse` and `children[]` (grandkids). A grandkid can in turn have its
+  own optional `spouse` (its `children[]` are the great-grandkids/bisnetos
+  born of that pairing) — bisnetos are the terminal level (no spouse/
+  children of their own). `photos` (jsonb
+  `{url, caption}[]`) and `documents` (jsonb `{name, url}[]`) stay at the
+  branch level, shared across all of a branch's couples. In the public
   "Pessoas da Família" spotlight, clicking a child with a spouse/grandkids
-  shows a "Família" section (`familyHtml()`). In the admin children
-  editor, spouse is 4 plain fields; grandchildren are a textarea, one per
-  line as `Nome | Nascimento | Falecimento` (`data-field="childrenText"`),
-  parsed on input — same "flatten a nested array into a textarea" trick
-  used for `encontros.photos`.
+  shows a "Família" section (`familyHtml()`) — this list is flat/read-only
+  and does **not** show bisnetos (they only appear in the tree view below,
+  since a grandkid isn't individually spotlightable). In the admin editor,
+  each couple is its own `subform-item`
+  (`renderCouplesEditList()`/`coupleEditItemHtml()`) — its father/mother
+  fields use `data-field`/`data-couple-index` (no `data-index`, since
+  there's exactly one father/mother per couple), and its nested children
+  list reuses the old per-child field names but adds `data-couple-index`
+  alongside `data-index` (`childEditRowHtml()`). Grandkids are their own
+  nested subform list inside a child row (`grandkidEditRowHtml()`), adding
+  a third index `data-grandkid-index` — its own spouse fields are prefixed
+  `gkSpouse*` (`gkSpouseName`/`gkSpousePhoto`/`gkSpouseBirth`/
+  `gkSpouseDeath`), same 3 indices, no fourth one (the spouse isn't itself
+  indexed, there's at most one per grandkid, same as a child's spouse).
+  Great-grandkids nest one level further inside a grandkid row
+  (`greatGrandkidEditRowHtml()`), adding a fourth index
+  `data-greatgrandkid-index` — by this point it's simplest to just check
+  which index attributes are present (`e.target.dataset.index ===
+  undefined` → couple-level field, `dataset.grandkidIndex === undefined`
+  → child-level field, `dataset.greatgrandkidIndex === undefined` →
+  grandkid-level field, else → great-grandkid-level field) rather than
+  trying to keep a single flat field-name map. In the public family tree
+  (`familyTreeHtml()`/`coupleTreeHtml()`), a grandkid renders as
+  `treeCoupleHtml(grandkid, 'Neto(a)', grandkid.spouse, 'Cônjuge')` — same
+  pairing treatment as a child+spouse — and each grandkid with bisnetos
+  becomes its own `.tree-grandkid-unit` (grandkid+spouse pair + a
+  connector + its own `.tree-greatgrandkids` row) so it's visually clear
+  whose great-grandkids are whose, instead of flattening every bisneto
+  from every grandkid into one shared row. A branch with more than one couple
+  shows a "Casal N"
+  label above each couple's block, both in the admin editor and in the
+  public people showcase/family tree (`buildPeopleArray()`,
+  `familyTreeHtml()`) — a single-couple branch (the common case) renders
+  with no label, identical to before this feature existed.
 - `branch_comments` — a public guestbook per branch (`branch_id`, `name`,
   `text`, `created_at`). See "Comments" below for why this is a real
   table instead of a `comments` jsonb column on `branches`.
@@ -129,15 +165,32 @@ fields" below, `renderDocumentsEditList()` in `src/main.js`.
 - `memorias` — the standalone photo/document gallery (see "Memórias"
   below). Not part of `state.data`; loaded and kept separately in
   `state.memorias` since it has its own Realtime subscription.
+- `family_library` (singleton row, `id = 1`) — `biografias`, `links`,
+  `bibliografia`, each a jsonb array of `{ title, url }`. A family-wide
+  reference shelf, not tied to any branch — its own nav section
+  (`#biblioteca`), placed after Memórias. `biografias` items get their
+  `url` from a PDF upload (same `fotos` bucket/upload path as branch
+  `documents`); `links`/`bibliografia` are plain text + an optional
+  external `url` typed by hand, no upload. All three render the same way
+  publicly (`libraryPillHtml()`): a `.document-item` pill that's a real
+  link when `url` is set, or a plain non-clickable pill when it isn't —
+  it never falls back to showing a raw URL as the label (see "Photo
+  fields" below for the same anti-raw-link fix applied to `documents`).
+  Edited as one block in `editLibraryModal` (three independent
+  add/remove/edit subform-lists, `renderBiografiasEditList()` /
+  `renderLinksEditList()` / `renderBibliografiaEditList()`), same
+  "singleton row, jsonb array fields" pattern as `family_union`/`history`
+  rather than a one-row-per-item table like `places`/`origins` — there's
+  no per-item detail page to link to, just a title and an optional link.
 
 ## Persistence & sync status
 
 Every read goes through `api.loadAllData()` (assembles `hero` + `encontros`
 + `branches` + `branch_comments` + `family_union` + `history` + `places` +
-`origins` into the same shape `state.data` has always had) or
-`api.loadMemorias()`. There is no local cache/fallback — Supabase is the
-single source of truth; if it's unreachable, `loadData()` shows an alert
-and falls back to an empty-but-valid `state.data` shape so the page
+`origins` + `family_library` into the same shape `state.data` has always
+had) or `api.loadMemorias()`. There is no local cache/fallback — Supabase
+is the single source of truth; if it's unreachable, `loadData()` shows an
+alert and falls back to an empty-but-valid `state.data` shape so the page
 doesn't crash.
 
 Every admin write goes through `withSync()` in `src/main.js`, which wraps
@@ -165,8 +218,8 @@ was removed at the client's request so it isn't a prominent, publicly
 visible call-to-action. Don't re-add a nav-level admin button without
 being asked.
 
-Every editable entity (hero, history, branch, familyUnion, place, origin)
-follows the same edit pattern: `openEdit*()` clones the current object
+Every editable entity (hero, history, branch, familyUnion, library, place,
+origin) follows the same edit pattern: `openEdit*()` clones the current object
 into `state.draft`, fills a modal's form fields, input listeners write
 straight into `state.draft`, and `save*()` calls the matching
 `api.save*()`, patches the result into `state.data`, and re-renders. New
@@ -202,11 +255,20 @@ mother, each child, each child's spouse, branch photo album, family-union
 photo album, place, origin, encontro cover, encontro photo album) uploads
 a file from the admin's computer to the `fotos` Storage bucket via
 `api.uploadPhoto()` — there is no "paste a URL" text input for photos
-anywhere any more. Branch `documents` use the exact same upload path and
-the same `fotos` bucket (Storage doesn't care about content type), just
-with `accept="application/pdf,.pdf"` on the file input instead of
-`image/*`, since a document is expected to be a PDF, not a picture. Two
-helpers in `src/main.js` cover every case:
+anywhere any more. Branch `documents` (and `family_library.biografias`, same shape) use the
+exact same upload path and the same `fotos` bucket (Storage doesn't care
+about content type), just with `accept="application/pdf,.pdf"` on the
+file input instead of `image/*`, since a document is expected to be a
+PDF, not a picture. Both give the item a `name`/`title` text field the
+admin can type into, but if it's left blank when the file finishes
+uploading, `wireListPhotoUpload`'s `applyUrl` callback auto-fills it from
+the uploaded file's name (extension stripped) — added after a real
+document ended up with no name and the public page fell back to
+rendering the raw Supabase Storage URL as the link text, which is exactly
+the "don't paste/show raw links" problem this whole convention exists to
+avoid. The public fallback was hardened too (`d.name || 'Documento'`,
+never `d.name || d.url`) as a second line of defense. Two helpers in
+`src/main.js` cover every case:
 
 - **`wirePhotoPicker({...})`** — for the ~6 single, fixed-id fields (hero,
   branch cover, father, mother, place, origin). Wired once per field in
@@ -226,9 +288,11 @@ helpers in `src/main.js` cover every case:
   `data-index` convention already used for the list's text inputs — kept
   as a *separate* attribute specifically so the old delegated `input`
   listener for text fields doesn't also try to handle file inputs), calls
-  `applyUrl(field, index, url)` to patch `state.draft`, then calls
-  `rerender()` (the list's own render function) to show the new
-  thumbnail. Progress during upload is shown as plain "Enviando… X%" text
+  `applyUrl(field, index, url, file)` to patch `state.draft` (the original
+  `File` is passed through too — the only current use is the
+  documents/biografias name auto-fill above; other callers just ignore
+  the 4th argument), then calls `rerender()` (the list's own render
+  function) to show the new thumbnail. Progress during upload is shown as plain "Enviando… X%" text
   in a `data-photo-status-for="{field}-{index}"` span next to that row —
   no per-row progress bar, to keep the markup light; the ~6 fixed fields
   above get a real animated bar (`.upload-progress`) since they're more
@@ -319,11 +383,17 @@ whitespace.
 
 ### People showcase (patriarch/matriarch/children)
 
-`buildPeopleArray(branch)` flattens father/mother/children (only entries
-with a `name`) into one array with a synthetic `pid` (`'father'`,
-`'mother'`, `'child0'`, `'child1'`, ...) — child entries also carry
+`buildPeopleArray(branch)` flattens every couple's father/mother/children
+(only entries with a `name`) into one array with a synthetic `pid` that
+carries the couple's index (`'c0-father'`, `'c0-mother'`, `'c0-child0'`,
+`'c1-father'`, ...) plus a `coupleIndex` field — child entries also carry
 `spouse`/`children` (grandkids) straight through from the data model.
-`renderPeopleShowcase()` then:
+`renderPeopleShowcase()` groups that flat array back by `coupleIndex`,
+rendering one photos+list block per couple; if the branch has more than
+one couple each block gets a "Casal N" label (`.people-couple-label`) and
+the blocks stack vertically (`.people-showcase-stacked`) — a single-couple
+branch renders exactly as before, no label. Within a single couple's
+block:
 
 - Splits people into two photo rows, not a masonry grid: parents
   (father/mother) on top, children below (`.people-photo-row`), all the
@@ -395,10 +465,14 @@ Intentionally: Hero (`#topo`, full-screen background photo from
 `familyUnion` "how we became one family" block above the branch cards) →
 **Linha do Tempo** (`#linha`, encontros) → **Locais Marcantes**
 (`#locais`) → **Países de Origem dos Ancestrais** (`#origens`) →
-**Memórias** (`#memorias`) → Footer. Nav links (desktop + mobile) follow
-the same order. Don't reorder these without being asked — this was set
-deliberately at the client's request, section by section, across
-multiple rounds of feedback.
+**Memórias** (`#memorias`) → **Biblioteca da Família** (`#biblioteca`,
+biografias/links/bibliografia) → Footer. Nav links (desktop + mobile)
+follow the same order. Don't reorder these without being asked — this was
+set deliberately at the client's request, section by section, across
+multiple rounds of feedback (Biblioteca is the one exception placed by
+default at the end, right before the footer, since it was the newest
+addition rather than part of that original ordering round — move it if
+asked).
 
 ## Death dates
 

@@ -44,6 +44,7 @@
         <a href="#locais">Locais</a>
         <a href="#origens">Origens</a>
         <a href="#memorias">Memórias</a>
+        <a href="#biblioteca">Biblioteca</a>
       </nav>
       <button type="button" class="mobile-menu-btn" id="btnMobileMenu" aria-label="Abrir menu">${icon:menu}</button>
     </div>
@@ -54,6 +55,7 @@
       <a href="#locais">Locais</a>
       <a href="#origens">Origens</a>
       <a href="#memorias">Memórias</a>
+      <a href="#biblioteca">Biblioteca</a>
     </nav>
   </header>
 
@@ -63,7 +65,7 @@
     <!-- HERO -->
     <section class="hero" id="topo">
       <div class="hero-inner">
-        <span class="eyebrow">Árvore &amp; Herança</span>
+        <span class="eyebrow">Árvore Genealógica</span>
         <h1 class="hero-title">Família<br><span id="heroFamilyName">—</span></h1>
         <p class="hero-motto">&ldquo;<span id="heroMotto"></span>&rdquo;</p>
         <div class="hero-actions">
@@ -170,6 +172,31 @@
       </div>
     </section>
 
+    <!-- BIBLIOTECA DA FAMÍLIA (biografias, links, bibliografia) -->
+    <section class="section library-section" id="biblioteca">
+      <div class="section-inner">
+        <div class="section-head section-head-center">
+          <span class="eyebrow">Fontes e Registros</span>
+          <h2 class="section-title">Biblioteca da Família</h2>
+          <p class="section-desc">Biografias, links e referências reunidos pela família.</p>
+        </div>
+        <div class="library-columns">
+          <div class="library-column">
+            <h3 class="library-column-title"><span class="icon accent" aria-hidden="true">${icon:file-text}</span> Biografias</h3>
+            <div class="library-list" id="libraryBiografias"></div>
+          </div>
+          <div class="library-column">
+            <h3 class="library-column-title"><span class="icon accent" aria-hidden="true">${icon:link}</span> Links</h3>
+            <div class="library-list" id="libraryLinks"></div>
+          </div>
+          <div class="library-column">
+            <h3 class="library-column-title"><span class="icon accent" aria-hidden="true">${icon:scroll}</span> Bibliografia</h3>
+            <div class="library-list" id="libraryBibliografia"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- FOOTER -->
     <footer class="site-footer">
       <div class="footer-inner">
@@ -228,7 +255,7 @@
     <!-- BRANCHES CARD -->
     <div class="admin-card">
       <div class="admin-card-head">
-        <h3><span class="icon accent" aria-hidden="true">${icon:git-branch}</span> Ramos &amp; Integrantes</h3>
+        <h3><span class="icon accent" aria-hidden="true">${icon:tree}</span> Ramos &amp; Integrantes</h3>
         <button type="button" class="btn btn-primary btn-sm" id="btnNewBranch">
           <span class="icon" aria-hidden="true">${icon:plus}</span> Novo ramo
         </button>
@@ -294,6 +321,17 @@
       </form>
       <div class="admin-list admin-list-spaced" id="adminMemoriasList"></div>
     </div>
+
+    <!-- LIBRARY CARD -->
+    <div class="admin-card">
+      <div class="admin-card-head">
+        <h3><span class="icon accent" aria-hidden="true">${icon:scroll}</span> Biblioteca da Família</h3>
+        <button type="button" class="btn btn-primary btn-sm" id="btnEditLibrary">
+          <span class="icon" aria-hidden="true">${icon:pencil}</span> Editar
+        </button>
+      </div>
+      <div class="admin-card-summary" id="librarySummary"></div>
+    </div>
   </main>
 
   <!-- ===================== AUTH MODAL ===================== -->
@@ -332,7 +370,7 @@
           <div class="modal-subhead-row">
             <div class="modal-subhead">Pessoas da família</div>
             <button type="button" class="btn-tree-toggle" id="btnToggleFamilyTree">
-              <span class="icon" aria-hidden="true">${icon:git-branch}</span> Visão geral da família
+              <span class="icon" aria-hidden="true">${icon:tree}</span> Visão geral da família
             </button>
           </div>
           <div class="people-showcase" id="branchModalPeople"></div>
@@ -483,57 +521,14 @@
           <textarea id="editBranchStory" class="text-area" rows="3"></textarea>
         </label>
 
-        <div class="parents-edit-grid">
-          <fieldset class="parent-fieldset">
-            <legend>Patriarca (Pai)</legend>
-            <input type="text" id="editFatherName" class="text-input" placeholder="Nome">
-            <div class="photo-row">
-              <span class="photo-row-preview" id="editFatherPhotoPreview"></span>
-              <label class="btn btn-chip">
-                <span class="icon" aria-hidden="true">${icon:upload}</span> Foto (opcional)
-                <input type="file" accept="image/*" class="visually-hidden-file" id="editFatherPhotoFile">
-              </label>
-              <button type="button" class="btn-danger-icon hidden" id="editFatherPhotoRemove" title="Remover foto">
-                <span class="icon" aria-hidden="true">${icon:trash-2}</span>
-              </button>
-              <span class="photo-row-status" id="editFatherPhotoStatus"></span>
-            </div>
-            <div class="subform-item-row">
-              <input type="text" id="editFatherBirth" class="text-input" placeholder="Nascimento">
-              <input type="text" id="editFatherDeath" class="text-input" placeholder="Falecimento (opcional)">
-            </div>
-            <textarea id="editFatherBio" class="text-area" rows="2" placeholder="Resumo da história"></textarea>
-          </fieldset>
-          <fieldset class="parent-fieldset">
-            <legend>Matriarca (Mãe)</legend>
-            <input type="text" id="editMotherName" class="text-input" placeholder="Nome">
-            <div class="photo-row">
-              <span class="photo-row-preview" id="editMotherPhotoPreview"></span>
-              <label class="btn btn-chip">
-                <span class="icon" aria-hidden="true">${icon:upload}</span> Foto (opcional)
-                <input type="file" accept="image/*" class="visually-hidden-file" id="editMotherPhotoFile">
-              </label>
-              <button type="button" class="btn-danger-icon hidden" id="editMotherPhotoRemove" title="Remover foto">
-                <span class="icon" aria-hidden="true">${icon:trash-2}</span>
-              </button>
-              <span class="photo-row-status" id="editMotherPhotoStatus"></span>
-            </div>
-            <div class="subform-item-row">
-              <input type="text" id="editMotherBirth" class="text-input" placeholder="Nascimento">
-              <input type="text" id="editMotherDeath" class="text-input" placeholder="Falecimento (opcional)">
-            </div>
-            <textarea id="editMotherBio" class="text-area" rows="2" placeholder="Resumo da história"></textarea>
-          </fieldset>
-        </div>
-
         <div>
           <div class="subform-head">
-            <span>Filhos</span>
-            <button type="button" class="btn btn-chip" id="btnAddChild">
-              <span class="icon" aria-hidden="true">${icon:user-plus}</span> Filho(a)
+            <span>Casais do ramo</span>
+            <button type="button" class="btn btn-chip" id="btnAddCouple">
+              <span class="icon" aria-hidden="true">${icon:user-plus}</span> Casal
             </button>
           </div>
-          <div class="subform-list" id="childrenEditList"></div>
+          <div class="subform-list" id="couplesEditList"></div>
         </div>
 
         <div>
@@ -619,6 +614,51 @@
       <div class="modal-form-footer">
         <button type="button" class="btn btn-outline" id="btnCancelEditHistory2">Cancelar</button>
         <button type="button" class="btn btn-primary" id="btnSaveHistory">
+          <span class="icon" aria-hidden="true">${icon:save}</span> Salvar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== EDIT: LIBRARY MODAL ===================== -->
+  <div class="modal-overlay hidden" id="editLibraryModal">
+    <div class="modal modal-lg" id="editLibraryModalBox">
+      <div class="modal-form-header">
+        <h3>Editar Biblioteca da Família</h3>
+        <button type="button" class="modal-close-light" id="btnCancelEditLibrary" aria-label="Fechar">${icon:x}</button>
+      </div>
+      <div class="modal-form-body">
+        <div>
+          <div class="subform-head">
+            <span>Biografias (arquivo PDF)</span>
+            <button type="button" class="btn btn-chip" id="btnAddBiografia">
+              <span class="icon" aria-hidden="true">${icon:plus}</span> Biografia
+            </button>
+          </div>
+          <div class="subform-list" id="biografiasEditList"></div>
+        </div>
+        <div>
+          <div class="subform-head">
+            <span>Links</span>
+            <button type="button" class="btn btn-chip" id="btnAddLink">
+              <span class="icon" aria-hidden="true">${icon:plus}</span> Link
+            </button>
+          </div>
+          <div class="subform-list" id="linksEditList"></div>
+        </div>
+        <div>
+          <div class="subform-head">
+            <span>Bibliografia</span>
+            <button type="button" class="btn btn-chip" id="btnAddBibliografia">
+              <span class="icon" aria-hidden="true">${icon:plus}</span> Referência
+            </button>
+          </div>
+          <div class="subform-list" id="bibliografiaEditList"></div>
+        </div>
+      </div>
+      <div class="modal-form-footer">
+        <button type="button" class="btn btn-outline" id="btnCancelEditLibrary2">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="btnSaveLibrary">
           <span class="icon" aria-hidden="true">${icon:save}</span> Salvar
         </button>
       </div>

@@ -53,13 +53,48 @@ create table if not exists branches (
   name text not null default '',
   photo_url text not null default '',
   story text not null default '',
-  father jsonb not null default '{"name":"","photo":"","birth":"","death":"","bio":""}',
-  mother jsonb not null default '{"name":"","photo":"","birth":"","death":"","bio":""}',
-  children jsonb not null default '[]', -- [{ name, photo, birth, death, bio, spouse, children:[...] }]
+  -- Um ramo pode ter vários casais da mesma geração (ex.: os pais do
+  -- cliente E o casal tia/tio ao lado), cada um com seu próprio grupo de
+  -- filhos: [{ father, mother, children:[{ name, photo, birth, death, bio, spouse, children:[...] }] }]
+  couples jsonb not null default '[{"father":{"name":"","photo":"","birth":"","death":"","bio":""},"mother":{"name":"","photo":"","birth":"","death":"","bio":""},"children":[]}]',
   photos jsonb not null default '[]',   -- [{ url, caption }]
   documents jsonb not null default '[]', -- [{ name, url }]
   created_at timestamptz not null default now()
 );
+
+-- Numa tabela `branches` já existente (criada antes desta coluna existir),
+-- o "create table if not exists" acima não faz nada — ele só cria tabelas
+-- novas, nunca adiciona colunas a uma tabela que já existe. Por isso a
+-- coluna precisa ser garantida explicitamente aqui antes de preenchê-la.
+alter table branches add column if not exists couples jsonb;
+
+-- Migração: ramos criados antes de existir "múltiplos casais por ramo"
+-- guardavam um único patriarca/matriarca nas colunas father/mother/children.
+-- Isso consolida esses dados no novo formato `couples` (uma lista, cada
+-- casal com seus próprios filhos) e remove as colunas antigas. Rodar de
+-- novo não tem efeito: o bloco só executa se as colunas antigas existirem,
+-- e só preenche `couples` onde ainda está nulo.
+do $$
+begin
+  if exists (select 1 from information_schema.columns where table_name = 'branches' and column_name = 'father') then
+    execute $q$
+      update branches set couples = jsonb_build_array(
+        jsonb_build_object(
+          'father', coalesce(father, '{"name":"","photo":"","birth":"","death":"","bio":""}'::jsonb),
+          'mother', coalesce(mother, '{"name":"","photo":"","birth":"","death":"","bio":""}'::jsonb),
+          'children', coalesce(children, '[]'::jsonb)
+        )
+      )
+      where couples is null;
+    $q$;
+  end if;
+end $$;
+update branches set couples = '[{"father":{"name":"","photo":"","birth":"","death":"","bio":""},"mother":{"name":"","photo":"","birth":"","death":"","bio":""},"children":[]}]'::jsonb where couples is null;
+alter table branches alter column couples set not null;
+alter table branches alter column couples set default '[{"father":{"name":"","photo":"","birth":"","death":"","bio":""},"mother":{"name":"","photo":"","birth":"","death":"","bio":""},"children":[]}]'::jsonb;
+alter table branches drop column if exists father;
+alter table branches drop column if exists mother;
+alter table branches drop column if exists children;
 
 -- Comentários do livro de visitas — tabela própria (ver nota no topo do
 -- arquivo): qualquer pessoa pode publicar, sem login.
@@ -126,6 +161,22 @@ create table if not exists memorias (
   criado_em timestamptz not null default now()
 );
 
+-- ---------------------------------------------------------
+-- 9. BIBLIOTECA DA FAMÍLIA (linha única — id fixo 1)
+-- Biografias, links e bibliografia — cada um é uma lista de
+-- { title, url }: biografias tem um PDF enviado pelo admin em `url`;
+-- links/bibliografia são só referência de texto + link externo opcional,
+-- sem upload. Igual family_union/history, é uma seção só, editada como um
+-- bloco único no painel, então não precisa virar tabela própria.
+-- ---------------------------------------------------------
+create table if not exists family_library (
+  id smallint primary key default 1 check (id = 1),
+  biografias jsonb not null default '[]',  -- [{ title, url }] — url = PDF no bucket "fotos"
+  links jsonb not null default '[]',       -- [{ title, url }] — url = link externo
+  bibliografia jsonb not null default '[]' -- [{ title, url }] — url = link externo (opcional)
+);
+insert into family_library (id) values (1) on conflict (id) do nothing;
+
 -- =========================================================
 -- ROW LEVEL SECURITY
 -- Regra geral em todas as tabelas: leitura pública (qualquer visitante,
@@ -143,6 +194,7 @@ alter table history enable row level security;
 alter table places enable row level security;
 alter table origins enable row level security;
 alter table memorias enable row level security;
+alter table family_library enable row level security;
 
 -- helper: recria as 4 políticas padrão (select público + escrita
 -- autenticada) pra uma tabela, pra não repetir o mesmo bloco 8x.
@@ -150,7 +202,7 @@ do $$
 declare
   t text;
 begin
-  foreach t in array array['hero', 'encontros', 'branches', 'family_union', 'history', 'places', 'origins', 'memorias']
+  foreach t in array array['hero', 'encontros', 'branches', 'family_union', 'history', 'places', 'origins', 'memorias', 'family_library']
   loop
     execute format('drop policy if exists "select_public" on %I', t);
     execute format('create policy "select_public" on %I for select to anon, authenticated using (true)', t);

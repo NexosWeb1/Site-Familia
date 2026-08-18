@@ -18,7 +18,7 @@ const ICONS = {
   calendar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><line x1="8" y1="3" x2="8" y2="7"/><line x1="16" y1="3" x2="16" y2="7"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
   'chevron-left': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 6 9 12 15 18"/></svg>',
   'chevron-right': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>',
-  'git-branch': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="3" x2="7" y2="14"/><circle cx="7" cy="18" r="2.5"/><circle cx="17" cy="6" r="2.5"/><path d="M17 8.5v2A5 5 0 0 1 12 15.5h-2"/></svg>',
+  tree: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="3" x2="7" y2="14"/><circle cx="7" cy="18" r="2.5"/><circle cx="17" cy="6" r="2.5"/><path d="M17 8.5v2A5 5 0 0 1 12 15.5h-2"/></svg>',
   users: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.6"/><path d="M15.5 14a5 5 0 0 1 5.5 5"/></svg>',
   'map-pin': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.5-7-11.5A7 7 0 0 1 19 9.5C19 14.5 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.4"/></svg>',
   settings: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19 13.5v-3l-2-.5a6.6 6.6 0 0 0-.7-1.7l1-1.8-2.1-2.1-1.8 1a6.6 6.6 0 0 0-1.7-.7L11.2 3h-3l-.5 2a6.6 6.6 0 0 0-1.7.7l-1.8-1-2.1 2.1 1 1.8a6.6 6.6 0 0 0-.7 1.7l-2 .5v3l2 .5a6.6 6.6 0 0 0 .7 1.7l-1 1.9 2.1 2.1 1.9-1a6.6 6.6 0 0 0 1.7.7l.5 2h3l.5-2a6.6 6.6 0 0 0 1.7-.7l1.9 1 2.1-2.1-1-1.9a6.6 6.6 0 0 0 .7-1.7z"/></svg>',
@@ -40,7 +40,8 @@ const ICONS = {
   image: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="M21 16l-5.5-5.5L4 21"/></svg>',
   'message-circle': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>',
   upload: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>',
-  'log-out': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>'
+  'log-out': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>',
+  link: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 17H7A5 5 0 0 1 7 7h2"/><path d="M15 7h2a5 5 0 1 1 0 10h-2"/><line x1="8" y1="12" x2="16" y2="12"/></svg>'
 };
 
 function iconHtml(name) { return ICONS[name] || ''; }
@@ -60,6 +61,12 @@ function defaultPerson() { return { name: '', photo: '', birth: '', death: '', b
 // patriarca/matriarca do ramo). Não recursivo além disso — netos não têm
 // cônjuge/filhos próprios exibidos.
 function defaultChild() { return Object.assign(defaultPerson(), { spouse: null, children: [] }); }
+// Um ramo pode ter vários casais da mesma geração (ex.: os pais do cliente
+// e o casal tia/tio ao lado), cada um com seu próprio grupo de filhos.
+function defaultCouple() { return { father: defaultPerson(), mother: defaultPerson(), children: [] }; }
+// Um neto pode ter seus próprios bisnetos — bisnetos em si são terminais
+// (sem cônjuge/filhos), por isso usam defaultPerson() puro.
+function defaultGrandkid() { return Object.assign(defaultPerson(), { spouse: null, children: [] }); }
 
 /* ---------------------------------------------------------
    2. ESTADO DA APLICAÇÃO
@@ -99,13 +106,15 @@ function lifespan(p) {
   return `${p.birth || '?'} — ${death}`;
 }
 function personCount(b) {
-  return (b.father && b.father.name ? 1 : 0) + (b.mother && b.mother.name ? 1 : 0) + (b.children || []).length;
+  return (b.couples || []).reduce((sum, c) => {
+    return sum + (c.father && c.father.name ? 1 : 0) + (c.mother && c.mother.name ? 1 : 0) + (c.children || []).length;
+  }, 0);
 }
 function formatDate(iso) {
   try { return new Date(iso).toLocaleDateString('pt-BR'); } catch (e) { return ''; }
 }
 
-const PLACEHOLDER_GRADIENT = 'repeating-linear-gradient(45deg,#e5f1e8,#e5f1e8 12px,#cbe6d2 12px,#cbe6d2 24px)';
+const PLACEHOLDER_GRADIENT = 'linear-gradient(135deg,#eef2ea,#e0e9d9)';
 // url() usa aspas simples porque este valor é embutido num atributo HTML
 // style="..." (aspas duplas) em vários lugares via template string — aspas
 // duplas aqui colidiriam com as do atributo e cortariam o valor ao meio,
@@ -116,7 +125,7 @@ function photoStyle(url) {
 function avatarStyle(url) {
   return url ? `background-image:url('${escapeHtml(url)}')` : 'background-image:linear-gradient(135deg,#2f7a31,#1c4a1e)';
 }
-const HERO_OVERLAY = 'linear-gradient(180deg, rgba(9,20,14,0.35) 0%, rgba(9,20,14,0.5) 55%, rgba(9,20,14,0.86) 100%)';
+const HERO_OVERLAY = 'linear-gradient(180deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.55) 55%, rgba(246,246,241,0.92) 100%)';
 function heroBgStyle(url) {
   return url ? `background-image:${HERO_OVERLAY}, url('${escapeHtml(url)}')` : `background-image:${HERO_OVERLAY}, ${PLACEHOLDER_GRADIENT}`;
 }
@@ -141,7 +150,7 @@ async function loadData() {
   } catch (err) {
     console.error('Falha ao carregar dados do Supabase:', err);
     document.getElementById('loadErrorBanner').classList.remove('hidden');
-    state.data = { hero: { familyName: '', motto: '', photo: '', encontros: [] }, branches: [], familyUnion: { story: '', photos: [] }, history: { text: '' }, places: [], origins: [] };
+    state.data = { hero: { familyName: '', motto: '', photo: '', encontros: [] }, branches: [], familyUnion: { story: '', photos: [] }, history: { text: '' }, places: [], origins: [], library: { biografias: [], links: [], bibliografia: [] } };
   }
   setLoading(false);
 }
@@ -195,6 +204,7 @@ function renderAll() {
   renderBranches();
   renderPlaces();
   renderOrigins();
+  renderLibrary();
   renderAdminSummaries();
   renderAdminBranchList();
   renderAdminPlaceList();
@@ -278,7 +288,7 @@ function renderBranches() {
     <button type="button" class="branch-card" data-action="openBranch" data-id="${b.id}">
       <span class="branch-photo" style="${photoStyle(b.photo)}">
         ${!b.photo ? '<span class="no-photo-label">FOTO DO RAMO</span>' : ''}
-        <span class="branch-badge icon">${iconHtml('git-branch')}</span>
+        <span class="branch-badge icon">${iconHtml('tree')}</span>
       </span>
       <span class="branch-body">
         <span class="branch-name">${escapeHtml(b.name)}</span>
@@ -382,12 +392,18 @@ function renderMemorias() {
 /* ---------------------------------------------------------
    5. MODAIS PÚBLICOS — RAMO / FOTOS GERAIS / LOCAL
    --------------------------------------------------------- */
+// Cada casal do ramo vira seu próprio grupo de pessoas (pais + filhos
+// daquele casal só) — pid carrega o índice do casal (ex. "c0-father",
+// "c1-child2") pra renderPeopleShowcase conseguir separar visualmente um
+// casal do outro quando o ramo tem mais de um.
 function buildPeopleArray(b) {
   const people = [];
-  if (b.father && b.father.name) people.push({ pid: 'father', name: b.father.name, photo: b.father.photo, role: 'Patriarca', dates: lifespan(b.father), bio: b.father.bio });
-  if (b.mother && b.mother.name) people.push({ pid: 'mother', name: b.mother.name, photo: b.mother.photo, role: 'Matriarca', dates: lifespan(b.mother), bio: b.mother.bio });
-  (b.children || []).forEach((c, i) => {
-    if (c.name) people.push({ pid: 'child' + i, name: c.name, photo: c.photo, role: 'Filho(a)', dates: lifespan(c), bio: c.bio, spouse: c.spouse, children: c.children });
+  (b.couples || []).forEach((couple, ci) => {
+    if (couple.father && couple.father.name) people.push({ pid: `c${ci}-father`, coupleIndex: ci, name: couple.father.name, photo: couple.father.photo, role: 'Patriarca', dates: lifespan(couple.father), bio: couple.father.bio });
+    if (couple.mother && couple.mother.name) people.push({ pid: `c${ci}-mother`, coupleIndex: ci, name: couple.mother.name, photo: couple.mother.photo, role: 'Matriarca', dates: lifespan(couple.mother), bio: couple.mother.bio });
+    (couple.children || []).forEach((c, i) => {
+      if (c.name) people.push({ pid: `c${ci}-child${i}`, coupleIndex: ci, name: c.name, photo: c.photo, role: 'Filho(a)', dates: lifespan(c), bio: c.bio, spouse: c.spouse, children: c.children });
+    });
   });
   return people;
 }
@@ -452,18 +468,32 @@ function renderPeopleShowcase(gridId, spotlightId, modalBoxId, people) {
   const byId = {};
   people.forEach((p) => { byId[p.pid] = p; });
 
-  // Pais numa fileira, filhos na(s) fileira(s) abaixo — mesma geração, mesmo tamanho.
-  const parents = people.filter(p => p.pid === 'father' || p.pid === 'mother');
-  const children = people.filter(p => p.pid.startsWith('child'));
+  // Um ramo pode ter vários casais — cada um vira seu próprio bloco
+  // pais-em-cima/filhos-embaixo, empilhado verticalmente quando há mais de
+  // um (rótulo "Casal N" só aparece nesse caso, pra não poluir o caso comum
+  // de ramo com um casal só).
+  const coupleIndexes = [...new Set(people.map(p => p.coupleIndex))];
+  const showLabels = coupleIndexes.length > 1;
+  grid.classList.toggle('people-showcase-stacked', showLabels);
 
-  grid.innerHTML = `
-    <div class="people-photos">
-      ${parents.length ? `<div class="people-photo-row">${parents.map(p => peoplePhotoHtml(p, peopleRowSizeClass(parents))).join('')}</div>` : ''}
-      ${children.length ? `<div class="people-photo-row">${children.map(p => peoplePhotoHtml(p, peopleRowSizeClass(children))).join('')}</div>` : ''}
-    </div>
-    <div class="people-list">
-      ${people.map(peopleRowHtml).join('')}
+  grid.innerHTML = coupleIndexes.map((ci, n) => {
+    const group = people.filter(p => p.coupleIndex === ci);
+    const parents = group.filter(p => p.role === 'Patriarca' || p.role === 'Matriarca');
+    const children = group.filter(p => p.role === 'Filho(a)');
+    return `
+    <div class="people-couple-group">
+      ${showLabels ? `<div class="people-couple-label">Casal ${n + 1}</div>` : ''}
+      <div class="people-showcase">
+        <div class="people-photos">
+          ${parents.length ? `<div class="people-photo-row">${parents.map(p => peoplePhotoHtml(p, peopleRowSizeClass(parents))).join('')}</div>` : ''}
+          ${children.length ? `<div class="people-photo-row">${children.map(p => peoplePhotoHtml(p, peopleRowSizeClass(children))).join('')}</div>` : ''}
+        </div>
+        <div class="people-list">
+          ${group.map(peopleRowHtml).join('')}
+        </div>
+      </div>
     </div>`;
+  }).join('');
 
   wirePeopleHover(grid, (id) => openPersonSpotlight(spotlight, grid, modalBox, byId[id]));
 }
@@ -541,20 +571,29 @@ function treeCoupleHtml(a, roleA, b, roleB) {
   return (aHtml || bHtml) ? `<div class="tree-couple tree-couple-single">${aHtml || bHtml}</div>` : '';
 }
 
-function familyTreeHtml(b) {
-  const hasParents = (b.father && b.father.name) || (b.mother && b.mother.name);
-  const children = (b.children || []).filter(c => c.name);
-  if (!hasParents && !children.length) return '<p class="modal-story">Nenhum integrante cadastrado ainda.</p>';
+function coupleTreeHtml(couple) {
+  const hasParents = (couple.father && couple.father.name) || (couple.mother && couple.mother.name);
+  const children = (couple.children || []).filter(c => c.name);
+  if (!hasParents && !children.length) return '';
 
   const parentsHtml = hasParents
-    ? `<div class="tree-generation">${treeCoupleHtml(b.father, 'Patriarca', b.mother, 'Matriarca')}</div>`
+    ? `<div class="tree-generation">${treeCoupleHtml(couple.father, 'Patriarca', couple.mother, 'Matriarca')}</div>`
     : '';
 
   const childUnits = children.map(c => {
     const coupleHtml = treeCoupleHtml(c, 'Filho(a)', c.spouse, 'Cônjuge');
     const kids = (c.children || []).filter(k => k.name);
+    // Cada neto pode ter seus próprios bisnetos — vira sua própria
+    // "coluninha" (neto + conector + bisnetos dele) dentro da fileira de
+    // netos, pra ficar claro de quem é filho de quem.
     const kidsHtml = kids.length
-      ? `<div class="tree-connector tree-connector-sm"></div><div class="tree-grandkids">${kids.map(k => treePersonHtml(k, 'Neto(a)')).join('')}</div>`
+      ? `<div class="tree-connector tree-connector-sm"></div><div class="tree-grandkids">${kids.map(k => {
+          const greatKids = (k.children || []).filter(gk => gk.name);
+          const greatKidsHtml = greatKids.length
+            ? `<div class="tree-connector tree-connector-sm"></div><div class="tree-greatgrandkids">${greatKids.map(gk => treePersonHtml(gk, 'Bisneto(a)')).join('')}</div>`
+            : '';
+          return `<div class="tree-grandkid-unit">${treeCoupleHtml(k, 'Neto(a)', k.spouse, 'Cônjuge')}${greatKidsHtml}</div>`;
+        }).join('')}</div>`
       : '';
     return `<div class="tree-unit">${coupleHtml}${kidsHtml}</div>`;
   }).join('');
@@ -564,6 +603,20 @@ function familyTreeHtml(b) {
     : '';
 
   return `<div class="family-tree-inner">${parentsHtml}${childrenHtml}</div>`;
+}
+
+// Um ramo pode ter vários casais da mesma geração — cada um vira seu
+// próprio bloco de árvore, empilhado verticalmente, com rótulo "Casal N"
+// só quando há mais de um (mesma regra do people showcase).
+function familyTreeHtml(b) {
+  const couples = (b.couples || []).map(coupleTreeHtml).filter(Boolean);
+  if (!couples.length) return '<p class="modal-story">Nenhum integrante cadastrado ainda.</p>';
+  if (couples.length === 1) return couples[0];
+  return couples.map((html, i) => `
+    <div class="family-tree-couple-block">
+      <div class="people-couple-label">Casal ${i + 1}</div>
+      ${html}
+    </div>`).join('');
 }
 
 function renderFamilyTree(containerId, branch) {
@@ -584,7 +637,7 @@ function toggleFamilyTree(show) {
   btn.classList.toggle('is-active', show);
   btn.innerHTML = show
     ? `${iconHtml('arrow-left')} Voltar para a lista`
-    : `${iconHtml('git-branch')} Visão geral da família`;
+    : `${iconHtml('tree')} Visão geral da família`;
 }
 
 function galleryHtml(photos) {
@@ -595,6 +648,30 @@ function galleryHtml(photos) {
         ${p.caption ? `<span class="gallery-caption">${escapeHtml(p.caption)}</span>` : ''}
       </div>`).join('')
     : '<p class="modal-story">Nenhuma foto adicionada ainda.</p>';
+}
+
+// Biblioteca da família: biografias (arquivo PDF), links e bibliografia
+// (referência + link opcional) — cada um é só uma lista de { title, url }.
+// Sem url vira um item estático (não clicável) em vez de link quebrado.
+function libraryPillHtml(item, iconName) {
+  return item.url
+    ? `<a class="document-item" href="${escapeHtml(item.url)}" target="_blank" rel="noopener"><span class="icon">${iconHtml(iconName)}</span><span>${escapeHtml(item.title)}</span></a>`
+    : `<span class="document-item document-item-static"><span class="icon">${iconHtml(iconName)}</span><span>${escapeHtml(item.title)}</span></span>`;
+}
+function renderLibrary() {
+  const lib = state.data.library || { biografias: [], links: [], bibliografia: [] };
+  const biografias = (lib.biografias || []).filter(b => b.title);
+  const links = (lib.links || []).filter(l => l.title);
+  const bibliografia = (lib.bibliografia || []).filter(b => b.title);
+  document.getElementById('libraryBiografias').innerHTML = biografias.length
+    ? biografias.map(b => libraryPillHtml(b, 'file-text')).join('')
+    : '<p class="modal-story">Nenhuma biografia publicada ainda.</p>';
+  document.getElementById('libraryLinks').innerHTML = links.length
+    ? links.map(l => libraryPillHtml(l, 'link')).join('')
+    : '<p class="modal-story">Nenhum link publicado ainda.</p>';
+  document.getElementById('libraryBibliografia').innerHTML = bibliografia.length
+    ? bibliografia.map(b => libraryPillHtml(b, 'scroll')).join('')
+    : '<p class="modal-story">Nenhuma referência publicada ainda.</p>';
 }
 
 function openBranchModal(id) {
@@ -614,7 +691,7 @@ function openBranchModal(id) {
     ? b.documents.map(d => `
       <a class="document-item" href="${escapeHtml(d.url)}" target="_blank" rel="noopener">
         <span class="icon">${iconHtml('file-text')}</span>
-        <span>${escapeHtml(d.name || d.url)}</span>
+        <span>${escapeHtml(d.name || 'Documento')}</span>
       </a>`).join('')
     : '<p class="modal-story">Nenhum documento adicionado ainda.</p>';
 
@@ -760,6 +837,10 @@ function renderAdminSummaries() {
   document.getElementById('historySummary').innerHTML = h.text
     ? escapeHtml(truncate(h.text, 140))
     : 'Nenhum histórico cadastrado ainda.';
+
+  const lib = state.data.library || { biografias: [], links: [], bibliografia: [] };
+  document.getElementById('librarySummary').innerHTML =
+    `${(lib.biografias || []).length} biografias · ${(lib.links || []).length} links · ${(lib.bibliografia || []).length} referências bibliográficas.`;
 }
 
 function renderAdminBranchList() {
@@ -894,9 +975,11 @@ function wirePhotoPicker({ fileInputId, previewId, removeBtnId, progressWrapId, 
 // (filhos, cônjuge, álbum do ramo, álbum da união) — essas linhas são
 // recriadas a cada add/remove, então não dá pra usar ids fixos; delega
 // o "change" pro container inteiro e identifica a linha por
-// data-photo-field + data-index. `applyUrl(field, index, url)` grava o
-// resultado em state.draft e `rerender()` (normalmente a própria função
-// de renderização da lista) redesenha tudo, já mostrando a miniatura nova.
+// data-photo-field + data-index. `applyUrl(field, index, url, file)` grava o
+// resultado em state.draft (o `file` original também é repassado — usado
+// pelo campo de documentos pra sugerir um nome a partir do arquivo) e
+// `rerender()` (normalmente a própria função de renderização da lista)
+// redesenha tudo, já mostrando a miniatura nova.
 function wireListPhotoUpload(containerId, applyUrl, rerender) {
   document.getElementById(containerId).addEventListener('change', async (e) => {
     const input = e.target.closest('[data-photo-field]');
@@ -909,7 +992,7 @@ function wireListPhotoUpload(containerId, applyUrl, rerender) {
     if (status) status.textContent = 'Enviando… 0%';
     try {
       const url = await api.uploadPhoto(file, (pct) => { if (status) status.textContent = 'Enviando… ' + pct + '%'; });
-      applyUrl(field, index, url);
+      applyUrl(field, index, url, file);
       rerender();
     } catch (err) {
       console.error(err);
@@ -919,7 +1002,7 @@ function wireListPhotoUpload(containerId, applyUrl, rerender) {
   });
 }
 
-let heroPhotoPicker, branchPhotoPicker, fatherPhotoPicker, motherPhotoPicker, placePhotoPicker, originPhotoPicker;
+let heroPhotoPicker, branchPhotoPicker, placePhotoPicker, originPhotoPicker;
 
 /* ---------------------------------------------------------
    8. EDIÇÃO — HERO / MARCOS
@@ -991,7 +1074,7 @@ function saveHero() {
 function newBranch() {
   state.editType = 'branch';
   state.editId = null;
-  state.draft = { id: null, name: '', photo: '', story: '', father: defaultPerson(), mother: defaultPerson(), children: [], photos: [], documents: [], comments: [] };
+  state.draft = { id: null, name: '', photo: '', story: '', couples: [defaultCouple()], photos: [], documents: [], comments: [] };
   fillBranchForm('Novo ramo');
 }
 
@@ -1010,71 +1093,191 @@ function fillBranchForm(title) {
   document.getElementById('editBranchStory').value = state.draft.story || '';
   branchPhotoPicker.refresh();
 
-  state.draft.father = state.draft.father || defaultPerson();
-  state.draft.mother = state.draft.mother || defaultPerson();
-  document.getElementById('editFatherName').value = state.draft.father.name || '';
-  document.getElementById('editFatherBirth').value = state.draft.father.birth || '';
-  document.getElementById('editFatherDeath').value = state.draft.father.death || '';
-  document.getElementById('editFatherBio').value = state.draft.father.bio || '';
-  fatherPhotoPicker.refresh();
-  document.getElementById('editMotherName').value = state.draft.mother.name || '';
-  document.getElementById('editMotherBirth').value = state.draft.mother.birth || '';
-  document.getElementById('editMotherDeath').value = state.draft.mother.death || '';
-  document.getElementById('editMotherBio').value = state.draft.mother.bio || '';
-  motherPhotoPicker.refresh();
-
-  renderChildrenEditList();
+  state.draft.couples = (state.draft.couples && state.draft.couples.length) ? state.draft.couples : [defaultCouple()];
+  renderCouplesEditList();
   renderBranchPhotosEditList();
   renderDocumentsEditList();
   renderCommentsEditList();
   showModal('editBranchModal');
 }
 
-function renderChildrenEditList() {
-  const list = document.getElementById('childrenEditList');
-  const children = state.draft.children || [];
-  list.innerHTML = children.map((c, i) => {
-    const spouse = c.spouse || defaultPerson();
-    const kidsText = (c.children || []).map(k => [k.name, k.birth, k.death].join(' | ')).join('\n');
-    return `
-    <div class="subform-item">
+// Um casal editável = pai + mãe (dois campos fixos por casal) + sua
+// própria lista de filhos, aninhada dentro do bloco do casal. data-couple-index
+// identifica o casal em todo campo/foto/ação; campos de filho carregam também
+// data-index (posição dentro de couple.children) — mesma convenção de dois
+// índices já usada pro álbum de fotos dos encontros (ver CLAUDE.md).
+// Um neto pode ter seus próprios bisnetos — mesma convenção de índices,
+// mais um nível: data-grandkid-index identifica o neto dentro de
+// child.children, e data-greatgrandkid-index identifica o bisneto dentro
+// de grandkid.children. Bisnetos são terminais (sem cônjuge/filhos
+// próprios), igual netos eram antes desta funcionalidade existir.
+function greatGrandkidEditRowHtml(gg, ci, i, gi, ggi) {
+  return `
+    <div class="subform-item subform-item-nested">
       <div class="subform-item-fields">
-        <input type="text" class="text-input" data-field="name" data-index="${i}" value="${escapeHtml(c.name)}" placeholder="Nome">
-        <div class="photo-row">
-          <span class="photo-row-preview" style="${photoStyle(c.photo)}"></span>
-          <label class="btn btn-chip">
-            <span class="icon" aria-hidden="true">${iconHtml('upload')}</span> ${c.photo ? 'Trocar foto' : 'Foto (opcional)'}
-            <input type="file" accept="image/*" class="visually-hidden-file" data-photo-field="photo" data-index="${i}">
-          </label>
-          <span class="photo-row-status" data-photo-status-for="photo-${i}"></span>
-        </div>
+        <input type="text" class="text-input" data-field="ggkName" data-couple-index="${ci}" data-index="${i}" data-grandkid-index="${gi}" data-greatgrandkid-index="${ggi}" value="${escapeHtml(gg.name)}" placeholder="Nome do bisneto(a)">
         <div class="subform-item-row">
-          <input type="text" class="text-input" data-field="birth" data-index="${i}" value="${escapeHtml(c.birth)}" placeholder="Nascimento">
-          <input type="text" class="text-input" data-field="death" data-index="${i}" value="${escapeHtml(c.death)}" placeholder="Falecimento (opcional)">
+          <input type="text" class="text-input" data-field="ggkBirth" data-couple-index="${ci}" data-index="${i}" data-grandkid-index="${gi}" data-greatgrandkid-index="${ggi}" value="${escapeHtml(gg.birth)}" placeholder="Nascimento">
+          <input type="text" class="text-input" data-field="ggkDeath" data-couple-index="${ci}" data-index="${i}" data-grandkid-index="${gi}" data-greatgrandkid-index="${ggi}" value="${escapeHtml(gg.death)}" placeholder="Falecimento (opcional)">
         </div>
-        <textarea class="text-area" rows="2" data-field="bio" data-index="${i}" placeholder="Resumo da história">${escapeHtml(c.bio)}</textarea>
+      </div>
+      <button type="button" class="btn-danger-icon" data-action="removeGreatGrandkid" data-couple-index="${ci}" data-index="${i}" data-grandkid-index="${gi}" data-greatgrandkid-index="${ggi}"><span class="icon">${iconHtml('trash-2')}</span></button>
+    </div>`;
+}
+
+function grandkidEditRowHtml(g, ci, i, gi) {
+  const spouse = g.spouse || defaultPerson();
+  const greatKids = g.children || [];
+  return `
+    <div class="subform-item subform-item-nested">
+      <div class="subform-item-fields">
+        <input type="text" class="text-input" data-field="gkName" data-couple-index="${ci}" data-index="${i}" data-grandkid-index="${gi}" value="${escapeHtml(g.name)}" placeholder="Nome do neto(a)">
+        <div class="subform-item-row">
+          <input type="text" class="text-input" data-field="gkBirth" data-couple-index="${ci}" data-index="${i}" data-grandkid-index="${gi}" value="${escapeHtml(g.birth)}" placeholder="Nascimento">
+          <input type="text" class="text-input" data-field="gkDeath" data-couple-index="${ci}" data-index="${i}" data-grandkid-index="${gi}" value="${escapeHtml(g.death)}" placeholder="Falecimento (opcional)">
+        </div>
 
         <div class="subform-subhead">Cônjuge (opcional)</div>
-        <input type="text" class="text-input" data-field="spouseName" data-index="${i}" value="${escapeHtml(spouse.name)}" placeholder="Nome do cônjuge">
+        <input type="text" class="text-input" data-field="gkSpouseName" data-couple-index="${ci}" data-index="${i}" data-grandkid-index="${gi}" value="${escapeHtml(spouse.name)}" placeholder="Nome do cônjuge">
         <div class="photo-row">
           <span class="photo-row-preview" style="${photoStyle(spouse.photo)}"></span>
           <label class="btn btn-chip">
             <span class="icon" aria-hidden="true">${iconHtml('upload')}</span> ${spouse.photo ? 'Trocar foto' : 'Foto (opcional)'}
-            <input type="file" accept="image/*" class="visually-hidden-file" data-photo-field="spousePhoto" data-index="${i}">
+            <input type="file" accept="image/*" class="visually-hidden-file" data-photo-field="gkSpousePhoto" data-couple-index="${ci}" data-index="${i}" data-grandkid-index="${gi}">
           </label>
-          <span class="photo-row-status" data-photo-status-for="spousePhoto-${i}"></span>
+          <span class="photo-row-status" data-photo-status-for="gkSpousePhoto-${ci}-${i}-${gi}"></span>
         </div>
         <div class="subform-item-row">
-          <input type="text" class="text-input" data-field="spouseBirth" data-index="${i}" value="${escapeHtml(spouse.birth)}" placeholder="Nascimento">
-          <input type="text" class="text-input" data-field="spouseDeath" data-index="${i}" value="${escapeHtml(spouse.death)}" placeholder="Falecimento (opcional)">
+          <input type="text" class="text-input" data-field="gkSpouseBirth" data-couple-index="${ci}" data-index="${i}" data-grandkid-index="${gi}" value="${escapeHtml(spouse.birth)}" placeholder="Nascimento">
+          <input type="text" class="text-input" data-field="gkSpouseDeath" data-couple-index="${ci}" data-index="${i}" data-grandkid-index="${gi}" value="${escapeHtml(spouse.death)}" placeholder="Falecimento (opcional)">
         </div>
 
-        <div class="subform-subhead">Filhos / netos (opcional)</div>
-        <textarea class="text-area" rows="2" data-field="childrenText" data-index="${i}" placeholder="Um por linha: Nome | Nascimento | Falecimento">${escapeHtml(kidsText)}</textarea>
+        <div class="subform-subhead-row">
+          <span class="subform-subhead">Bisnetos (opcional)</span>
+          <button type="button" class="btn btn-chip btn-chip-xs" data-action="addGreatGrandkid" data-couple-index="${ci}" data-index="${i}" data-grandkid-index="${gi}">${iconHtml('user-plus')} Bisneto(a)</button>
+        </div>
+        <div class="subform-list">
+          ${greatKids.map((gg, ggi) => greatGrandkidEditRowHtml(gg, ci, i, gi, ggi)).join('') || '<p class="admin-card-summary">Nenhum bisneto ainda.</p>'}
+        </div>
       </div>
-      <button type="button" class="btn-danger-icon" data-action="removeChild" data-index="${i}"><span class="icon">${iconHtml('trash-2')}</span></button>
+      <button type="button" class="btn-danger-icon" data-action="removeGrandkid" data-couple-index="${ci}" data-index="${i}" data-grandkid-index="${gi}"><span class="icon">${iconHtml('trash-2')}</span></button>
     </div>`;
-  }).join('') || '<p class="admin-card-summary">Nenhum filho ainda. Clique em "Filho(a)" para adicionar.</p>';
+}
+
+function childEditRowHtml(c, ci, i) {
+  const spouse = c.spouse || defaultPerson();
+  const grandkids = c.children || [];
+  return `
+    <div class="subform-item">
+      <div class="subform-item-fields">
+        <input type="text" class="text-input" data-field="name" data-couple-index="${ci}" data-index="${i}" value="${escapeHtml(c.name)}" placeholder="Nome">
+        <div class="photo-row">
+          <span class="photo-row-preview" style="${photoStyle(c.photo)}"></span>
+          <label class="btn btn-chip">
+            <span class="icon" aria-hidden="true">${iconHtml('upload')}</span> ${c.photo ? 'Trocar foto' : 'Foto (opcional)'}
+            <input type="file" accept="image/*" class="visually-hidden-file" data-photo-field="photo" data-couple-index="${ci}" data-index="${i}">
+          </label>
+          <span class="photo-row-status" data-photo-status-for="photo-${ci}-${i}"></span>
+        </div>
+        <div class="subform-item-row">
+          <input type="text" class="text-input" data-field="birth" data-couple-index="${ci}" data-index="${i}" value="${escapeHtml(c.birth)}" placeholder="Nascimento">
+          <input type="text" class="text-input" data-field="death" data-couple-index="${ci}" data-index="${i}" value="${escapeHtml(c.death)}" placeholder="Falecimento (opcional)">
+        </div>
+        <textarea class="text-area" rows="2" data-field="bio" data-couple-index="${ci}" data-index="${i}" placeholder="Resumo da história">${escapeHtml(c.bio)}</textarea>
+
+        <div class="subform-subhead">Cônjuge (opcional)</div>
+        <input type="text" class="text-input" data-field="spouseName" data-couple-index="${ci}" data-index="${i}" value="${escapeHtml(spouse.name)}" placeholder="Nome do cônjuge">
+        <div class="photo-row">
+          <span class="photo-row-preview" style="${photoStyle(spouse.photo)}"></span>
+          <label class="btn btn-chip">
+            <span class="icon" aria-hidden="true">${iconHtml('upload')}</span> ${spouse.photo ? 'Trocar foto' : 'Foto (opcional)'}
+            <input type="file" accept="image/*" class="visually-hidden-file" data-photo-field="spousePhoto" data-couple-index="${ci}" data-index="${i}">
+          </label>
+          <span class="photo-row-status" data-photo-status-for="spousePhoto-${ci}-${i}"></span>
+        </div>
+        <div class="subform-item-row">
+          <input type="text" class="text-input" data-field="spouseBirth" data-couple-index="${ci}" data-index="${i}" value="${escapeHtml(spouse.birth)}" placeholder="Nascimento">
+          <input type="text" class="text-input" data-field="spouseDeath" data-couple-index="${ci}" data-index="${i}" value="${escapeHtml(spouse.death)}" placeholder="Falecimento (opcional)">
+        </div>
+
+        <div class="subform-subhead-row">
+          <span class="subform-subhead">Netos (opcional)</span>
+          <button type="button" class="btn btn-chip btn-chip-xs" data-action="addGrandkid" data-couple-index="${ci}" data-index="${i}">${iconHtml('user-plus')} Neto(a)</button>
+        </div>
+        <div class="subform-list">
+          ${grandkids.map((g, gi) => grandkidEditRowHtml(g, ci, i, gi)).join('') || '<p class="admin-card-summary">Nenhum neto ainda.</p>'}
+        </div>
+      </div>
+      <button type="button" class="btn-danger-icon" data-action="removeChild" data-couple-index="${ci}" data-index="${i}"><span class="icon">${iconHtml('trash-2')}</span></button>
+    </div>`;
+}
+
+function coupleEditItemHtml(couple, ci) {
+  const f = couple.father || defaultPerson();
+  const m = couple.mother || defaultPerson();
+  const children = couple.children || [];
+  return `
+    <div class="subform-item couple-edit-item">
+      <div class="subform-item-fields">
+        <div class="couple-edit-head">
+          <span class="couple-edit-label">Casal ${ci + 1}</span>
+          <button type="button" class="btn-danger-icon" data-action="removeCouple" data-couple-index="${ci}"><span class="icon">${iconHtml('trash-2')}</span></button>
+        </div>
+        <div class="parents-edit-grid">
+          <fieldset class="parent-fieldset">
+            <legend>Patriarca (Pai)</legend>
+            <input type="text" class="text-input" data-field="fatherName" data-couple-index="${ci}" value="${escapeHtml(f.name)}" placeholder="Nome">
+            <div class="photo-row">
+              <span class="photo-row-preview" style="${photoStyle(f.photo)}"></span>
+              <label class="btn btn-chip">
+                <span class="icon" aria-hidden="true">${iconHtml('upload')}</span> ${f.photo ? 'Trocar foto' : 'Foto (opcional)'}
+                <input type="file" accept="image/*" class="visually-hidden-file" data-photo-field="fatherPhoto" data-couple-index="${ci}">
+              </label>
+              <span class="photo-row-status" data-photo-status-for="fatherPhoto-${ci}"></span>
+            </div>
+            <div class="subform-item-row">
+              <input type="text" class="text-input" data-field="fatherBirth" data-couple-index="${ci}" value="${escapeHtml(f.birth)}" placeholder="Nascimento">
+              <input type="text" class="text-input" data-field="fatherDeath" data-couple-index="${ci}" value="${escapeHtml(f.death)}" placeholder="Falecimento (opcional)">
+            </div>
+            <textarea class="text-area" rows="2" data-field="fatherBio" data-couple-index="${ci}" placeholder="Resumo da história">${escapeHtml(f.bio)}</textarea>
+          </fieldset>
+          <fieldset class="parent-fieldset">
+            <legend>Matriarca (Mãe)</legend>
+            <input type="text" class="text-input" data-field="motherName" data-couple-index="${ci}" value="${escapeHtml(m.name)}" placeholder="Nome">
+            <div class="photo-row">
+              <span class="photo-row-preview" style="${photoStyle(m.photo)}"></span>
+              <label class="btn btn-chip">
+                <span class="icon" aria-hidden="true">${iconHtml('upload')}</span> ${m.photo ? 'Trocar foto' : 'Foto (opcional)'}
+                <input type="file" accept="image/*" class="visually-hidden-file" data-photo-field="motherPhoto" data-couple-index="${ci}">
+              </label>
+              <span class="photo-row-status" data-photo-status-for="motherPhoto-${ci}"></span>
+            </div>
+            <div class="subform-item-row">
+              <input type="text" class="text-input" data-field="motherBirth" data-couple-index="${ci}" value="${escapeHtml(m.birth)}" placeholder="Nascimento">
+              <input type="text" class="text-input" data-field="motherDeath" data-couple-index="${ci}" value="${escapeHtml(m.death)}" placeholder="Falecimento (opcional)">
+            </div>
+            <textarea class="text-area" rows="2" data-field="motherBio" data-couple-index="${ci}" placeholder="Resumo da história">${escapeHtml(m.bio)}</textarea>
+          </fieldset>
+        </div>
+        <div class="couple-children-block">
+          <div class="subform-head">
+            <span>Filhos deste casal</span>
+            <button type="button" class="btn btn-chip" data-action="addChild" data-couple-index="${ci}">
+              <span class="icon" aria-hidden="true">${iconHtml('user-plus')}</span> Filho(a)
+            </button>
+          </div>
+          <div class="subform-list">
+            ${children.map((c, i) => childEditRowHtml(c, ci, i)).join('') || '<p class="admin-card-summary">Nenhum filho ainda. Clique em "Filho(a)" para adicionar.</p>'}
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderCouplesEditList() {
+  const list = document.getElementById('couplesEditList');
+  const couples = state.draft.couples || [];
+  list.innerHTML = couples.map((c, ci) => coupleEditItemHtml(c, ci)).join('') || '<p class="admin-card-summary">Nenhum casal ainda. Clique em "Casal" para adicionar.</p>';
 }
 
 function renderBranchPhotosEditList() {
@@ -1226,6 +1429,75 @@ function saveHistory() {
   withSync(async () => {
     state.data.history = await api.saveHistory(state.draft);
     hideModal('editHistoryModal');
+    renderAll();
+  });
+}
+
+/* ---------------------------------------------------------
+   10b. EDIÇÃO — BIBLIOTECA DA FAMÍLIA (biografias/links/bibliografia)
+   --------------------------------------------------------- */
+function openEditLibrary() {
+  state.editType = 'library';
+  state.draft = clone(state.data.library || { biografias: [], links: [], bibliografia: [] });
+  renderBiografiasEditList();
+  renderLinksEditList();
+  renderBibliografiaEditList();
+  showModal('editLibraryModal');
+}
+
+function renderBiografiasEditList() {
+  const list = document.getElementById('biografiasEditList');
+  const items = state.draft.biografias || [];
+  list.innerHTML = items.map((item, i) => `
+    <div class="subform-item">
+      <div class="subform-item-fields">
+        <input type="text" class="text-input" data-field="title" data-index="${i}" value="${escapeHtml(item.title)}" placeholder="Título da biografia">
+        <div class="photo-row">
+          ${item.url ? `<a class="document-item" href="${escapeHtml(item.url)}" target="_blank" rel="noopener"><span class="icon">${iconHtml('file-text')}</span><span>Ver arquivo atual</span></a>` : ''}
+          <label class="btn btn-chip">
+            <span class="icon" aria-hidden="true">${iconHtml('upload')}</span> ${item.url ? 'Trocar arquivo (PDF)' : 'Escolher arquivo (PDF)'}
+            <input type="file" accept="application/pdf,.pdf" class="visually-hidden-file" data-photo-field="url" data-index="${i}">
+          </label>
+          <span class="photo-row-status" data-photo-status-for="url-${i}"></span>
+        </div>
+      </div>
+      <button type="button" class="btn-danger-icon" data-action="removeBiografia" data-index="${i}"><span class="icon">${iconHtml('trash-2')}</span></button>
+    </div>
+  `).join('') || '<p class="admin-card-summary">Nenhuma biografia ainda. Clique em "Biografia" para adicionar.</p>';
+}
+
+function renderLinksEditList() {
+  const list = document.getElementById('linksEditList');
+  const items = state.draft.links || [];
+  list.innerHTML = items.map((item, i) => `
+    <div class="subform-item">
+      <div class="subform-item-fields">
+        <input type="text" class="text-input" data-field="title" data-index="${i}" value="${escapeHtml(item.title)}" placeholder="Título do link">
+        <input type="text" class="text-input" data-field="url" data-index="${i}" value="${escapeHtml(item.url)}" placeholder="https://...">
+      </div>
+      <button type="button" class="btn-danger-icon" data-action="removeLink" data-index="${i}"><span class="icon">${iconHtml('trash-2')}</span></button>
+    </div>
+  `).join('') || '<p class="admin-card-summary">Nenhum link ainda. Clique em "Link" para adicionar.</p>';
+}
+
+function renderBibliografiaEditList() {
+  const list = document.getElementById('bibliografiaEditList');
+  const items = state.draft.bibliografia || [];
+  list.innerHTML = items.map((item, i) => `
+    <div class="subform-item">
+      <div class="subform-item-fields">
+        <input type="text" class="text-input" data-field="title" data-index="${i}" value="${escapeHtml(item.title)}" placeholder="Referência bibliográfica">
+        <input type="text" class="text-input" data-field="url" data-index="${i}" value="${escapeHtml(item.url)}" placeholder="Link (opcional)">
+      </div>
+      <button type="button" class="btn-danger-icon" data-action="removeBibliografia" data-index="${i}"><span class="icon">${iconHtml('trash-2')}</span></button>
+    </div>
+  `).join('') || '<p class="admin-card-summary">Nenhuma referência ainda. Clique em "Referência" para adicionar.</p>';
+}
+
+function saveLibrary() {
+  withSync(async () => {
+    state.data.library = await api.saveLibrary(state.draft);
+    hideModal('editLibraryModal');
     renderAll();
   });
 }
@@ -1488,50 +1760,93 @@ function bindStaticEvents() {
     getUrl: () => state.draft.photo, setUrl: (url) => { state.draft.photo = url; }
   });
 
-  document.getElementById('editFatherName').addEventListener('input', (e) => { state.draft.father.name = e.target.value; });
-  document.getElementById('editFatherBirth').addEventListener('input', (e) => { state.draft.father.birth = e.target.value; });
-  document.getElementById('editFatherDeath').addEventListener('input', (e) => { state.draft.father.death = e.target.value; });
-  document.getElementById('editFatherBio').addEventListener('input', (e) => { state.draft.father.bio = e.target.value; });
-  fatherPhotoPicker = wirePhotoPicker({
-    fileInputId: 'editFatherPhotoFile', previewId: 'editFatherPhotoPreview', removeBtnId: 'editFatherPhotoRemove', statusId: 'editFatherPhotoStatus',
-    getUrl: () => state.draft.father.photo, setUrl: (url) => { state.draft.father.photo = url; }
+  document.getElementById('btnAddCouple').addEventListener('click', () => {
+    state.draft.couples = state.draft.couples || [];
+    state.draft.couples.push(defaultCouple());
+    renderCouplesEditList();
   });
-  document.getElementById('editMotherName').addEventListener('input', (e) => { state.draft.mother.name = e.target.value; });
-  document.getElementById('editMotherBirth').addEventListener('input', (e) => { state.draft.mother.birth = e.target.value; });
-  document.getElementById('editMotherDeath').addEventListener('input', (e) => { state.draft.mother.death = e.target.value; });
-  document.getElementById('editMotherBio').addEventListener('input', (e) => { state.draft.mother.bio = e.target.value; });
-  motherPhotoPicker = wirePhotoPicker({
-    fileInputId: 'editMotherPhotoFile', previewId: 'editMotherPhotoPreview', removeBtnId: 'editMotherPhotoRemove', statusId: 'editMotherPhotoStatus',
-    getUrl: () => state.draft.mother.photo, setUrl: (url) => { state.draft.mother.photo = url; }
-  });
-
-  document.getElementById('btnAddChild').addEventListener('click', () => {
-    state.draft.children = state.draft.children || [];
-    state.draft.children.push(defaultChild());
-    renderChildrenEditList();
-  });
+  const COUPLE_PARENT_FIELD_MAP = {
+    fatherName: ['father', 'name'], fatherBirth: ['father', 'birth'], fatherDeath: ['father', 'death'], fatherBio: ['father', 'bio'],
+    motherName: ['mother', 'name'], motherBirth: ['mother', 'birth'], motherDeath: ['mother', 'death'], motherBio: ['mother', 'bio']
+  };
   const SPOUSE_FIELD_MAP = { spouseName: 'name', spouseBirth: 'birth', spouseDeath: 'death' };
-  document.getElementById('childrenEditList').addEventListener('input', (e) => {
-    const field = e.target.dataset.field, idx = e.target.dataset.index;
-    if (field === undefined || idx === undefined) return;
-    const child = state.draft.children[+idx];
-    if (SPOUSE_FIELD_MAP[field]) {
-      child.spouse = child.spouse || defaultPerson();
-      child.spouse[SPOUSE_FIELD_MAP[field]] = e.target.value;
-    } else if (field === 'childrenText') {
-      child.children = e.target.value.split('\n').map(line => line.trim()).filter(Boolean).map(line => {
-        const [name, birth, death] = line.split('|').map(s => (s || '').trim());
-        return Object.assign(defaultPerson(), { name: name || '', birth: birth || '', death: death || '' });
-      });
-    } else {
-      child[field] = e.target.value;
+  const GRANDKID_FIELD_MAP = { gkName: 'name', gkBirth: 'birth', gkDeath: 'death' };
+  const GK_SPOUSE_FIELD_MAP = { gkSpouseName: 'name', gkSpouseBirth: 'birth', gkSpouseDeath: 'death' };
+  const GREATGRANDKID_FIELD_MAP = { ggkName: 'name', ggkBirth: 'birth', ggkDeath: 'death' };
+  document.getElementById('couplesEditList').addEventListener('input', (e) => {
+    const field = e.target.dataset.field;
+    const ci = e.target.dataset.coupleIndex;
+    if (field === undefined || ci === undefined) return;
+    const couple = state.draft.couples[+ci];
+    const idx = e.target.dataset.index;
+    if (idx === undefined) {
+      const map = COUPLE_PARENT_FIELD_MAP[field];
+      if (map) couple[map[0]][map[1]] = e.target.value;
+      return;
+    }
+    const child = couple.children[+idx];
+    const gi = e.target.dataset.grandkidIndex;
+    if (gi === undefined) {
+      if (SPOUSE_FIELD_MAP[field]) {
+        child.spouse = child.spouse || defaultPerson();
+        child.spouse[SPOUSE_FIELD_MAP[field]] = e.target.value;
+      } else {
+        child[field] = e.target.value;
+      }
+      return;
+    }
+    const grandkid = child.children[+gi];
+    const ggi = e.target.dataset.greatgrandkidIndex;
+    if (ggi === undefined) {
+      if (GK_SPOUSE_FIELD_MAP[field]) {
+        grandkid.spouse = grandkid.spouse || defaultPerson();
+        grandkid.spouse[GK_SPOUSE_FIELD_MAP[field]] = e.target.value;
+        return;
+      }
+      const map = GRANDKID_FIELD_MAP[field];
+      if (map) grandkid[map] = e.target.value;
+      return;
+    }
+    const greatGrandkid = grandkid.children[+ggi];
+    const map2 = GREATGRANDKID_FIELD_MAP[field];
+    if (map2) greatGrandkid[map2] = e.target.value;
+  });
+  // Fotos dentro do editor de casais precisam de DOIS índices (casal + filho,
+  // quando aplicável) — como o álbum de encontros, não dá pra usar
+  // wireListPhotoUpload (que só suporta um índice), então é feito à mão.
+  document.getElementById('couplesEditList').addEventListener('change', async (e) => {
+    const input = e.target.closest('[data-photo-field]');
+    if (!input) return;
+    const field = input.dataset.photoField;
+    const ci = +input.dataset.coupleIndex;
+    const idx = input.dataset.index;
+    const gi = input.dataset.grandkidIndex;
+    const file = input.files[0];
+    if (!file) return;
+    const statusKey = [field, ci, idx, gi].filter(v => v !== undefined).join('-');
+    const status = document.querySelector(`#couplesEditList [data-photo-status-for="${statusKey}"]`);
+    if (status) status.textContent = 'Enviando… 0%';
+    try {
+      const url = await api.uploadPhoto(file, (pct) => { if (status) status.textContent = 'Enviando… ' + pct + '%'; });
+      const couple = state.draft.couples[ci];
+      if (field === 'fatherPhoto') couple.father.photo = url;
+      else if (field === 'motherPhoto') couple.mother.photo = url;
+      else if (field === 'gkSpousePhoto') {
+        const grandkid = couple.children[+idx].children[+gi];
+        grandkid.spouse = grandkid.spouse || defaultPerson();
+        grandkid.spouse.photo = url;
+      } else {
+        const child = couple.children[+idx];
+        if (field === 'spousePhoto') { child.spouse = child.spouse || defaultPerson(); child.spouse.photo = url; }
+        else child.photo = url;
+      }
+      renderCouplesEditList();
+    } catch (err) {
+      console.error(err);
+      alert('Não foi possível enviar a foto: ' + err.message);
+      if (status) status.textContent = '';
     }
   });
-  wireListPhotoUpload('childrenEditList', (field, index, url) => {
-    const child = state.draft.children[index];
-    if (field === 'spousePhoto') { child.spouse = child.spouse || defaultPerson(); child.spouse.photo = url; }
-    else { child.photo = url; }
-  }, renderChildrenEditList);
 
   document.getElementById('btnAddBranchPhoto').addEventListener('click', () => {
     state.draft.photos = state.draft.photos || [];
@@ -1557,8 +1872,13 @@ function bindStaticEvents() {
     if (field === undefined || idx === undefined) return;
     state.draft.documents[+idx][field] = e.target.value;
   });
-  wireListPhotoUpload('documentsEditList', (field, index, url) => {
-    state.draft.documents[index].url = url;
+  wireListPhotoUpload('documentsEditList', (field, index, url, file) => {
+    const doc = state.draft.documents[index];
+    doc.url = url;
+    // Sugere o nome a partir do arquivo escolhido quando o admin ainda não
+    // digitou um — assim um documento nunca fica sem nome (e sem isso, a
+    // exibição pública caía de volta pro link cru do Storage).
+    if (!doc.name && file) doc.name = file.name.replace(/\.[^./]+$/, '');
   }, renderDocumentsEditList);
 
   document.getElementById('btnEditUnion').addEventListener('click', openEditUnion);
@@ -1585,6 +1905,49 @@ function bindStaticEvents() {
   document.getElementById('btnCancelEditHistory2').addEventListener('click', () => hideModal('editHistoryModal'));
   document.getElementById('btnSaveHistory').addEventListener('click', saveHistory);
   document.getElementById('editHistoryText').addEventListener('input', (e) => { state.draft.text = e.target.value; });
+
+  document.getElementById('btnEditLibrary').addEventListener('click', openEditLibrary);
+  document.getElementById('btnCancelEditLibrary').addEventListener('click', () => hideModal('editLibraryModal'));
+  document.getElementById('btnCancelEditLibrary2').addEventListener('click', () => hideModal('editLibraryModal'));
+  document.getElementById('btnSaveLibrary').addEventListener('click', saveLibrary);
+
+  document.getElementById('btnAddBiografia').addEventListener('click', () => {
+    state.draft.biografias = state.draft.biografias || [];
+    state.draft.biografias.push({ title: '', url: '' });
+    renderBiografiasEditList();
+  });
+  document.getElementById('biografiasEditList').addEventListener('input', (e) => {
+    const field = e.target.dataset.field, idx = e.target.dataset.index;
+    if (field === undefined || idx === undefined) return;
+    state.draft.biografias[+idx][field] = e.target.value;
+  });
+  wireListPhotoUpload('biografiasEditList', (field, index, url, file) => {
+    const item = state.draft.biografias[index];
+    item.url = url;
+    if (!item.title && file) item.title = file.name.replace(/\.[^./]+$/, '');
+  }, renderBiografiasEditList);
+
+  document.getElementById('btnAddLink').addEventListener('click', () => {
+    state.draft.links = state.draft.links || [];
+    state.draft.links.push({ title: '', url: '' });
+    renderLinksEditList();
+  });
+  document.getElementById('linksEditList').addEventListener('input', (e) => {
+    const field = e.target.dataset.field, idx = e.target.dataset.index;
+    if (field === undefined || idx === undefined) return;
+    state.draft.links[+idx][field] = e.target.value;
+  });
+
+  document.getElementById('btnAddBibliografia').addEventListener('click', () => {
+    state.draft.bibliografia = state.draft.bibliografia || [];
+    state.draft.bibliografia.push({ title: '', url: '' });
+    renderBibliografiaEditList();
+  });
+  document.getElementById('bibliografiaEditList').addEventListener('input', (e) => {
+    const field = e.target.dataset.field, idx = e.target.dataset.index;
+    if (field === undefined || idx === undefined) return;
+    state.draft.bibliografia[+idx][field] = e.target.value;
+  });
 
   document.getElementById('btnNewOrigin').addEventListener('click', newOrigin);
   document.getElementById('btnCancelEditOrigin').addEventListener('click', () => hideModal('editOriginModal'));
@@ -1626,6 +1989,9 @@ function bindStaticEvents() {
     const action = target.dataset.action;
     const id = target.dataset.id;
     const index = target.dataset.index;
+    const coupleIndex = target.dataset.coupleIndex;
+    const grandkidIndex = target.dataset.grandkidIndex;
+    const greatgrandkidIndex = target.dataset.greatgrandkidIndex;
     switch (action) {
       case 'openBranch': openBranchModal(id); break;
       case 'openPlace': openPlaceModal(id); break;
@@ -1652,9 +2018,39 @@ function bindStaticEvents() {
         state.activeEncontroIndex = +index;
         renderEncontros();
         break;
+      case 'removeCouple':
+        state.draft.couples.splice(+coupleIndex, 1);
+        renderCouplesEditList();
+        break;
+      case 'addChild':
+        state.draft.couples[+coupleIndex].children.push(defaultChild());
+        renderCouplesEditList();
+        break;
       case 'removeChild':
-        state.draft.children.splice(+index, 1);
-        renderChildrenEditList();
+        state.draft.couples[+coupleIndex].children.splice(+index, 1);
+        renderCouplesEditList();
+        break;
+      case 'addGrandkid': {
+        const child = state.draft.couples[+coupleIndex].children[+index];
+        child.children = child.children || [];
+        child.children.push(defaultGrandkid());
+        renderCouplesEditList();
+        break;
+      }
+      case 'removeGrandkid':
+        state.draft.couples[+coupleIndex].children[+index].children.splice(+grandkidIndex, 1);
+        renderCouplesEditList();
+        break;
+      case 'addGreatGrandkid': {
+        const grandkid = state.draft.couples[+coupleIndex].children[+index].children[+grandkidIndex];
+        grandkid.children = grandkid.children || [];
+        grandkid.children.push(defaultPerson());
+        renderCouplesEditList();
+        break;
+      }
+      case 'removeGreatGrandkid':
+        state.draft.couples[+coupleIndex].children[+index].children[+grandkidIndex].children.splice(+greatgrandkidIndex, 1);
+        renderCouplesEditList();
         break;
       case 'removeBranchPhoto':
         state.draft.photos.splice(+index, 1);
@@ -1665,6 +2061,18 @@ function bindStaticEvents() {
         renderDocumentsEditList();
         break;
       case 'deleteComment': deleteComment(id); break;
+      case 'removeBiografia':
+        state.draft.biografias.splice(+index, 1);
+        renderBiografiasEditList();
+        break;
+      case 'removeLink':
+        state.draft.links.splice(+index, 1);
+        renderLinksEditList();
+        break;
+      case 'removeBibliografia':
+        state.draft.bibliografia.splice(+index, 1);
+        renderBibliografiaEditList();
+        break;
       case 'removeUnionPhoto':
         state.draft.photos.splice(+index, 1);
         renderUnionPhotosEditList();

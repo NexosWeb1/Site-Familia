@@ -18,7 +18,7 @@ function mapEncontroRow(row) {
 function mapBranchRow(row, comments) {
   return {
     id: row.id, name: row.name, photo: row.photo_url, story: row.story,
-    father: row.father, mother: row.mother, children: row.children || [],
+    couples: row.couples || [],
     photos: row.photos || [], documents: row.documents || [],
     comments: comments || []
   };
@@ -35,6 +35,9 @@ function mapCommentRow(row) {
 function mapMemoriaRow(row) {
   return { id: row.id, titulo: row.titulo, descricao: row.descricao, url: row.url_arquivo, tipo: row.tipo, criadoEm: row.criado_em };
 }
+function mapLibraryRow(row) {
+  return { biografias: row.biografias || [], links: row.links || [], bibliografia: row.bibliografia || [] };
+}
 
 function throwIfError({ error }) {
   if (error) throw error;
@@ -46,7 +49,7 @@ function throwIfError({ error }) {
    separadamente com Realtime — ver loadMemorias/subscribeMemorias).
    --------------------------------------------------------- */
 export async function loadAllData() {
-  const [heroRes, encontrosRes, branchesRes, commentsRes, unionRes, historyRes, placesRes, originsRes] = await Promise.all([
+  const [heroRes, encontrosRes, branchesRes, commentsRes, unionRes, historyRes, placesRes, originsRes, libraryRes] = await Promise.all([
     supabase.from('hero').select('*').eq('id', 1).single(),
     supabase.from('encontros').select('*').order('created_at', { ascending: true }),
     supabase.from('branches').select('*').order('created_at', { ascending: true }),
@@ -54,9 +57,10 @@ export async function loadAllData() {
     supabase.from('family_union').select('*').eq('id', 1).single(),
     supabase.from('history').select('*').eq('id', 1).single(),
     supabase.from('places').select('*').order('created_at', { ascending: true }),
-    supabase.from('origins').select('*').order('created_at', { ascending: true })
+    supabase.from('origins').select('*').order('created_at', { ascending: true }),
+    supabase.from('family_library').select('*').eq('id', 1).single()
   ]);
-  [heroRes, encontrosRes, branchesRes, commentsRes, unionRes, historyRes, placesRes, originsRes].forEach(throwIfError);
+  [heroRes, encontrosRes, branchesRes, commentsRes, unionRes, historyRes, placesRes, originsRes, libraryRes].forEach(throwIfError);
 
   const commentsByBranch = {};
   (commentsRes.data || []).forEach((c) => {
@@ -69,7 +73,8 @@ export async function loadAllData() {
     familyUnion: { story: unionRes.data.story || '', photos: unionRes.data.photos || [] },
     history: { text: historyRes.data.text || '' },
     places: (placesRes.data || []).map(mapPlaceRow),
-    origins: (originsRes.data || []).map(mapOriginRow)
+    origins: (originsRes.data || []).map(mapOriginRow),
+    library: mapLibraryRow(libraryRes.data)
   };
 }
 
@@ -105,7 +110,7 @@ export async function saveHero(hero) {
 export async function saveBranch(branch) {
   const row = {
     name: branch.name, photo_url: branch.photo, story: branch.story,
-    father: branch.father, mother: branch.mother, children: branch.children || [],
+    couples: branch.couples || [],
     photos: branch.photos || [], documents: branch.documents || []
   };
   if (branch.id) {
@@ -153,6 +158,15 @@ export async function saveUnion(union) {
 export async function saveHistory(history) {
   throwIfError(await supabase.from('history').update({ text: history.text }).eq('id', 1));
   return { text: history.text };
+}
+
+/* ---------------------------------------------------------
+   Biblioteca da família (biografias / links / bibliografia)
+   --------------------------------------------------------- */
+export async function saveLibrary(library) {
+  const row = { biografias: library.biografias || [], links: library.links || [], bibliografia: library.bibliografia || [] };
+  throwIfError(await supabase.from('family_library').update(row).eq('id', 1));
+  return row;
 }
 
 /* ---------------------------------------------------------
