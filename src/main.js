@@ -3,6 +3,23 @@
    JavaScript Vanilla (ES6+) — dados e mídia no Supabase (ver src/api.js)
    ========================================================= */
 import * as api from './api.js';
+import pdfjsWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
+
+// pdfjs-dist só é carregado (import dinâmico) quando a primeira prévia de
+// PDF precisa ser renderizada — é uma lib pesada, e a maioria das visitas
+// ao site nunca abre um ramo com documentos, então não faz sentido inflar
+// o bundle principal com ela. `pdfjsWorkerUrl` acima é só a URL do worker
+// (string resolvida em build time pelo sufixo `?url`), não a lib em si.
+let pdfjsLibPromise = null;
+function loadPdfjs() {
+  if (!pdfjsLibPromise) {
+    pdfjsLibPromise = import('pdfjs-dist').then((mod) => {
+      mod.GlobalWorkerOptions.workerSrc = pdfjsWorkerUrl;
+      return mod;
+    });
+  }
+  return pdfjsLibPromise;
+}
 
 /* ---------------------------------------------------------
    0. ÍCONES (SVG inline, sem dependências externas)
@@ -124,6 +141,12 @@ function photoStyle(url) {
 }
 function avatarStyle(url) {
   return url ? `background-image:url('${escapeHtml(url)}')` : 'background-image:linear-gradient(135deg,#2f7a31,#1c4a1e)';
+}
+// Atributo data-lightbox="URL" pra qualquer elemento clicável de foto (ver
+// openLightbox()/bindStaticEvents() mais abaixo) — vazio quando não há foto,
+// pra não deixar um placeholder clicável abrindo um lightbox sem imagem.
+function lightboxAttr(url) {
+  return url ? `data-lightbox="${escapeHtml(url)}"` : '';
 }
 const HERO_OVERLAY = 'linear-gradient(180deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.55) 55%, rgba(246,246,241,0.92) 100%)';
 function heroBgStyle(url) {
@@ -255,7 +278,7 @@ function renderEncontroPanel(e) {
   const panelEl = document.getElementById('encontrosPanel');
   panelEl.innerHTML = `
     <div class="encontro-panel-card">
-      <span class="encontro-panel-photo" style="${photoStyle(e.photo)}">
+      <span class="encontro-panel-photo" style="${photoStyle(e.photo)}" ${lightboxAttr(e.photo)}>
         ${!e.photo ? '<span class="no-photo-label">FOTO DO ENCONTRO</span>' : ''}
       </span>
       <div class="encontro-panel-body">
@@ -277,7 +300,7 @@ function renderFamilyUnion() {
   const strip = document.getElementById('unionPhotosStrip');
   const photos = (u.photos || []).slice(0, 4);
   strip.innerHTML = photos.length
-    ? photos.map(p => `<span class="union-photo-thumb" style="${photoStyle(p.url)}"></span>`).join('')
+    ? photos.map(p => `<span class="union-photo-thumb" style="${photoStyle(p.url)}" ${lightboxAttr(p.url)}></span>`).join('')
     : `<span class="union-photo-thumb placeholder icon">${iconHtml('image')}</span>`;
 }
 
@@ -351,7 +374,7 @@ function renderOriginPanel(o) {
   const panelEl = document.getElementById('originsPanel');
   panelEl.innerHTML = `
     <div class="encontro-panel-card origin-panel-card">
-      <span class="encontro-panel-photo" style="${photoStyle(o.photo)}">
+      <span class="encontro-panel-photo" style="${photoStyle(o.photo)}" ${lightboxAttr(o.photo)}>
         ${!o.photo ? '<span class="no-photo-label">FOTO DA ORIGEM</span>' : ''}
       </span>
       <div class="encontro-panel-body">
@@ -373,7 +396,7 @@ function renderMemorias() {
   grid.innerHTML = items.length
     ? items.map((m) => `
       <div class="memoria-card">
-        <span class="memoria-thumb" style="${m.tipo === 'foto' ? photoStyle(m.url) : ''}">
+        <span class="memoria-thumb" style="${m.tipo === 'foto' ? photoStyle(m.url) : ''}" ${m.tipo === 'foto' ? lightboxAttr(m.url) : ''}>
           ${m.tipo !== 'foto' ? `<span class="icon memoria-doc-icon" aria-hidden="true">${iconHtml('file-text')}</span>` : ''}
         </span>
         <div class="memoria-body">
@@ -535,7 +558,9 @@ function openPersonSpotlight(spotlight, grid, modalBox, p) {
       <p class="people-spotlight-bio">${escapeHtml(p.bio) || 'Nenhuma história registrada ainda para esta pessoa.'}</p>
       ${familyHtml(p)}
     </div>`;
-  spotlight.querySelector('.people-spotlight-photo').style.cssText = avatarStyle(p.photo);
+  const spotlightPhotoEl = spotlight.querySelector('.people-spotlight-photo');
+  spotlightPhotoEl.style.cssText = avatarStyle(p.photo);
+  if (p.photo) spotlightPhotoEl.dataset.lightbox = p.photo;
   spotlight.classList.remove('hidden');
   grid.classList.add('hidden');
   if (modalBox) modalBox.classList.add('is-focused');
@@ -556,7 +581,7 @@ function treePersonHtml(person, role) {
   if (!person || !person.name) return '';
   return `
     <div class="tree-person">
-      <div class="tree-person-photo" style="${avatarStyle(person.photo)}">
+      <div class="tree-person-photo" style="${avatarStyle(person.photo)}" ${lightboxAttr(person.photo)}>
         ${!person.photo ? `<span class="tree-person-fallback">${escapeHtml(initials(person.name))}</span>` : ''}
       </div>
       <div class="tree-person-name">${escapeHtml(person.name)}</div>
@@ -644,7 +669,7 @@ function galleryHtml(photos) {
   return (photos || []).length
     ? photos.map(p => `
       <div class="gallery-item">
-        <span class="gallery-photo" style="${photoStyle(p.url)}"></span>
+        <span class="gallery-photo" style="${photoStyle(p.url)}" ${lightboxAttr(p.url)}></span>
         ${p.caption ? `<span class="gallery-caption">${escapeHtml(p.caption)}</span>` : ''}
       </div>`).join('')
     : '<p class="modal-story">Nenhuma foto adicionada ainda.</p>';
@@ -658,14 +683,86 @@ function libraryPillHtml(item, iconName) {
     ? `<a class="document-item" href="${escapeHtml(item.url)}" target="_blank" rel="noopener"><span class="icon">${iconHtml(iconName)}</span><span>${escapeHtml(item.title)}</span></a>`
     : `<span class="document-item document-item-static"><span class="icon">${iconHtml(iconName)}</span><span>${escapeHtml(item.title)}</span></span>`;
 }
+// Preview maior (ícone grande + nome), pra documentos que são de fato um
+// upload de PDF (documentos de ramo, biografias da biblioteca) — bem mais
+// visível que a pastilha pequena de libraryPillHtml(), que continua valendo
+// pra links/bibliografia (texto digitado, sem arquivo próprio). É um botão
+// (não um <a target="_blank">) porque clicar abre o PDF no próprio
+// lightbox (ver openPdfViewer()) em vez de mandar pra outra aba.
+function documentCardHtml(label, url) {
+  return `
+    <button type="button" class="document-card" data-action="openPdfViewer" data-url="${escapeHtml(url)}">
+      <span class="document-card-preview" data-pdf-preview="${escapeHtml(url)}">
+        <span class="icon document-card-icon-fallback">${iconHtml('file-text')}</span>
+      </span>
+      <span class="document-card-name">${escapeHtml(label || 'Documento')}</span>
+    </button>`;
+}
+// URL do PDF -> Promise<PDFDocumentProxy> (pdfjs-dist). Compartilhado entre
+// a miniatura da 1ª página (renderPdfPreview) e o visualizador em tela
+// cheia (openPdfViewer/renderPdfPageImage) — carregar/parsear o PDF de novo
+// a cada página vista seria bem mais lento que só cachear o documento.
+const pdfDocumentCache = new Map();
+function loadPdfDocument(url) {
+  if (!pdfDocumentCache.has(url)) {
+    pdfDocumentCache.set(url, loadPdfjs().then((pdfjsLib) => pdfjsLib.getDocument({ url }).promise));
+  }
+  return pdfDocumentCache.get(url);
+}
+// url[+"#"+página] -> Promise<dataURL PNG>. Evita re-renderizar a mesma
+// página toda vez que a lista é redesenhada ou o visitante navega de volta
+// pra uma página já vista.
+const pdfPageImageCache = new Map();
+function renderPdfPage(url, pageNum, targetWidthCss) {
+  const cacheKey = `${url}#${pageNum}#${targetWidthCss}`;
+  if (!pdfPageImageCache.has(cacheKey)) {
+    pdfPageImageCache.set(cacheKey, (async () => {
+      const pdf = await loadPdfDocument(url);
+      const page = await pdf.getPage(pageNum);
+      const unscaled = page.getViewport({ scale: 1 });
+      // Ajustado pela densidade de pixels da tela — nítido em telas retina
+      // sem renderizar gigante à toa.
+      const scale = (targetWidthCss * (window.devicePixelRatio || 1)) / unscaled.width;
+      const viewport = page.getViewport({ scale });
+      const canvas = document.createElement('canvas');
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+      await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+      return canvas.toDataURL('image/png');
+    })());
+  }
+  return pdfPageImageCache.get(cacheKey);
+}
+function renderPdfPreview(url) {
+  return renderPdfPage(url, 1, 320).catch((err) => {
+    console.error('Não foi possível gerar a prévia do PDF:', err);
+    return null;
+  });
+}
+// A lista é mostrada de imediato com o ícone de fallback; a miniatura real
+// da 1ª página entra por cima assim que fica pronta (renderização de PDF é
+// assíncrona). `el.isConnected` evita aplicar a imagem num card que já foi
+// removido/redesenhado enquanto a promise ainda estava pendente.
+function hydratePdfPreviews(root) {
+  root.querySelectorAll('[data-pdf-preview]').forEach((el) => {
+    const url = el.dataset.pdfPreview;
+    renderPdfPreview(url).then((dataUrl) => {
+      if (!dataUrl || !el.isConnected) return;
+      el.style.backgroundImage = `url('${dataUrl}')`;
+      el.classList.add('has-preview');
+    });
+  });
+}
 function renderLibrary() {
   const lib = state.data.library || { biografias: [], links: [], bibliografia: [] };
   const biografias = (lib.biografias || []).filter(b => b.title);
   const links = (lib.links || []).filter(l => l.title);
   const bibliografia = (lib.bibliografia || []).filter(b => b.title);
-  document.getElementById('libraryBiografias').innerHTML = biografias.length
-    ? biografias.map(b => libraryPillHtml(b, 'file-text')).join('')
+  const biografiasEl = document.getElementById('libraryBiografias');
+  biografiasEl.innerHTML = biografias.length
+    ? biografias.map(b => b.url ? documentCardHtml(b.title, b.url) : libraryPillHtml(b, 'file-text')).join('')
     : '<p class="modal-story">Nenhuma biografia publicada ainda.</p>';
+  hydratePdfPreviews(biografiasEl);
   document.getElementById('libraryLinks').innerHTML = links.length
     ? links.map(l => libraryPillHtml(l, 'link')).join('')
     : '<p class="modal-story">Nenhum link publicado ainda.</p>';
@@ -687,13 +784,11 @@ function openBranchModal(id) {
 
   document.getElementById('branchModalPhotos').innerHTML = galleryHtml(b.photos);
 
-  document.getElementById('branchModalDocuments').innerHTML = (b.documents || []).length
-    ? b.documents.map(d => `
-      <a class="document-item" href="${escapeHtml(d.url)}" target="_blank" rel="noopener">
-        <span class="icon">${iconHtml('file-text')}</span>
-        <span>${escapeHtml(d.name || 'Documento')}</span>
-      </a>`).join('')
+  const branchDocsEl = document.getElementById('branchModalDocuments');
+  branchDocsEl.innerHTML = (b.documents || []).length
+    ? b.documents.map(d => documentCardHtml(d.name, d.url)).join('')
     : '<p class="modal-story">Nenhum documento adicionado ainda.</p>';
+  hydratePdfPreviews(branchDocsEl);
 
   document.getElementById('branchModalComments').innerHTML = commentsHtml(b.comments);
 
@@ -758,6 +853,7 @@ function openPlaceModal(id) {
   photoEl.style.cssText += photoStyle(p.photo);
   photoEl.querySelectorAll('.no-photo-label').forEach(n => n.remove());
   if (!p.photo) photoEl.insertAdjacentHTML('beforeend', '<span class="no-photo-label">FOTO DO LOCAL</span>');
+  if (p.photo) photoEl.dataset.lightbox = p.photo; else delete photoEl.dataset.lightbox;
   document.getElementById('placeModalName').textContent = p.name;
   document.getElementById('placeModalStory').textContent = p.story;
   document.getElementById('placeModalImportance').textContent = p.importance;
@@ -767,7 +863,66 @@ function openPlaceModal(id) {
 function showModal(id) { document.getElementById(id).classList.remove('hidden'); }
 function hideModal(id) { document.getElementById(id).classList.add('hidden'); }
 function hideAllModals() {
-  ['authModal', 'branchModal', 'generalPhotosModal', 'placeModal', 'editHeroModal', 'editBranchModal', 'editUnionModal', 'editPlaceModal', 'editHistoryModal', 'editOriginModal'].forEach(hideModal);
+  ['authModal', 'branchModal', 'generalPhotosModal', 'placeModal', 'lightboxModal', 'editHeroModal', 'editBranchModal', 'editUnionModal', 'editPlaceModal', 'editHistoryModal', 'editOriginModal'].forEach(hideModal);
+}
+
+// Amplia qualquer foto do site num overlay em tela cheia — ver elementos
+// com data-lightbox (helper lightboxAttr()) e o listener delegado em
+// bindStaticEvents(). Usa <img> (não background-image) de propósito: é o
+// que permite o gesto de pinça pra dar zoom no celular, que é justamente o
+// que foi pedido.
+function openLightbox(url) {
+  if (!url) return;
+  pdfViewer = null;
+  document.getElementById('lightboxPdfNav').classList.add('hidden');
+  document.getElementById('lightboxImage').src = url;
+  showModal('lightboxModal');
+}
+
+// Estado do PDF atualmente aberto no lightbox (null quando é só uma foto) —
+// { url, page, totalPages }. Ver documentCardHtml()/openPdfViewer().
+let pdfViewer = null;
+async function openPdfViewer(url) {
+  if (!url) return;
+  try {
+    const pdf = await loadPdfDocument(url);
+    pdfViewer = { url, page: 1, totalPages: pdf.numPages };
+    showModal('lightboxModal');
+    await showPdfViewerPage();
+  } catch (err) {
+    console.error('Não foi possível abrir o PDF:', err);
+    // Se der pra abrir o arquivo bruto numa aba, o visitante não fica sem
+    // conseguir ver o documento só porque a renderização falhou.
+    window.open(url, '_blank', 'noopener');
+  }
+}
+async function showPdfViewerPage() {
+  if (!pdfViewer) return;
+  const { url, page, totalPages } = pdfViewer;
+  const navEl = document.getElementById('lightboxPdfNav');
+  navEl.classList.toggle('hidden', totalPages <= 1);
+  document.getElementById('lightboxPdfPageLabel').textContent = `Página ${page} de ${totalPages}`;
+  document.getElementById('btnLightboxPrevPage').disabled = page <= 1;
+  document.getElementById('btnLightboxNextPage').disabled = page >= totalPages;
+  try {
+    // Alvo bem maior que a miniatura da lista — aqui é a visualização em
+    // destaque, tela cheia.
+    const dataUrl = await renderPdfPage(url, page, 1400);
+    // Confere se o visitante não trocou de página/fechou o lightbox
+    // enquanto a página anterior ainda estava renderizando.
+    if (pdfViewer && pdfViewer.url === url && pdfViewer.page === page) {
+      document.getElementById('lightboxImage').src = dataUrl;
+    }
+  } catch (err) {
+    console.error('Não foi possível renderizar a página do PDF:', err);
+  }
+}
+function changePdfViewerPage(delta) {
+  if (!pdfViewer) return;
+  const nextPage = pdfViewer.page + delta;
+  if (nextPage < 1 || nextPage > pdfViewer.totalPages) return;
+  pdfViewer.page = nextPage;
+  showPdfViewerPage();
 }
 
 /* ---------------------------------------------------------
@@ -1684,6 +1839,9 @@ function bindStaticEvents() {
   document.getElementById('btnOpenGeneralPhotos').addEventListener('click', openGeneralPhotosModal);
   document.getElementById('btnCloseGeneralPhotos').addEventListener('click', () => hideModal('generalPhotosModal'));
   document.getElementById('btnClosePlaceModal').addEventListener('click', () => hideModal('placeModal'));
+  document.getElementById('btnCloseLightbox').addEventListener('click', () => hideModal('lightboxModal'));
+  document.getElementById('btnLightboxPrevPage').addEventListener('click', () => changePdfViewerPage(-1));
+  document.getElementById('btnLightboxNextPage').addEventListener('click', () => changePdfViewerPage(1));
 
   document.getElementById('btnEditHero').addEventListener('click', openEditHero);
   document.getElementById('btnCancelEditHero').addEventListener('click', () => hideModal('editHeroModal'));
@@ -1984,6 +2142,15 @@ function bindStaticEvents() {
 
   // Delegação de eventos para conteúdo gerado dinamicamente (cards, listas admin, subformulários)
   document.body.addEventListener('click', (e) => {
+    // Amplia a foto clicada, a menos que o clique tenha sido num botão/link
+    // dentro dela (ex.: o "x" de fechar do placeModalPhoto, que também
+    // carrega data-lightbox no seu contêiner pai).
+    const photoTarget = e.target.closest('[data-lightbox]');
+    if (photoTarget && !e.target.closest('button, a')) {
+      openLightbox(photoTarget.dataset.lightbox);
+      return;
+    }
+
     const target = e.target.closest('[data-action]');
     if (!target) return;
     const action = target.dataset.action;
@@ -2002,6 +2169,7 @@ function bindStaticEvents() {
       case 'editOrigin': editOrigin(id); break;
       case 'deleteOrigin': deleteOrigin(id); break;
       case 'deleteMemoria': deleteMemoria(id); break;
+      case 'openPdfViewer': openPdfViewer(target.dataset.url); break;
       case 'selectOrigin':
         state.activeOriginIndex = +index;
         renderOrigins();
@@ -2084,7 +2252,12 @@ function bindStaticEvents() {
   document.querySelectorAll('.modal-overlay').forEach((overlay) => {
     overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.classList.add('hidden'); });
   });
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') hideAllModals(); });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { hideAllModals(); return; }
+    if (!pdfViewer || document.getElementById('lightboxModal').classList.contains('hidden')) return;
+    if (e.key === 'ArrowLeft') changePdfViewerPage(-1);
+    else if (e.key === 'ArrowRight') changePdfViewerPage(1);
+  });
 
   // Fecha o menu mobile ao clicar em um link de navegação
   document.querySelectorAll('#mobileNav a').forEach(a => a.addEventListener('click', closeMobileNav));

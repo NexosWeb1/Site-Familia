@@ -519,6 +519,27 @@ input, textarea, select { font-family: inherit; }
   cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--cream); flex-shrink: 0;
 }
 .modal-close-abs { position: absolute; top: 16px; right: 16px; background: rgba(27,42,52,0.5); }
+
+/* ---------- lightbox (clicar em qualquer foto do site amplia) ---------- */
+[data-lightbox] { cursor: zoom-in; }
+.lightbox-overlay { z-index: 500; align-items: center; background: rgba(12,18,15,0.92); backdrop-filter: blur(2px); }
+.lightbox-content { position: relative; max-width: 94vw; max-height: 92vh; margin: auto; }
+.lightbox-img { display: block; max-width: 94vw; max-height: 92vh; width: auto; height: auto; object-fit: contain; border-radius: 6px; box-shadow: 0 20px 60px rgba(0,0,0,0.45); }
+.lightbox-close { position: absolute; top: -16px; right: -16px; background: var(--teal); }
+@media (max-width: 640px) { .lightbox-close { top: 8px; right: 8px; } }
+.lightbox-pdf-nav {
+  position: absolute; left: 50%; bottom: -56px; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 14px; background: rgba(27,42,52,0.85);
+  padding: 8px 18px; border-radius: 999px; color: var(--cream);
+}
+@media (max-width: 640px) { .lightbox-pdf-nav { bottom: 12px; } }
+.lightbox-pdf-btn {
+  background: rgba(255,255,255,0.14); border: none; width: 34px; height: 34px; border-radius: 999px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--cream);
+}
+.lightbox-pdf-btn .icon { width: 18px; height: 18px; }
+.lightbox-pdf-btn:disabled { opacity: 0.35; cursor: default; }
+.lightbox-pdf-page { font-size: 13px; font-weight: 700; white-space: nowrap; }
 .modal-body { padding: 26px 28px; }
 .modal-story { font-size: 15.5px; line-height: 1.7; color: var(--text); margin: 0 0 22px; }
 .modal-subhead { color: var(--gold-dark); font-size: 12.5px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 14px; }
@@ -671,6 +692,24 @@ input, textarea, select { font-family: inherit; }
 .document-item:hover { background: var(--cream-alt); }
 .document-item-static { cursor: default; }
 .document-item-static:hover { background: var(--card-alt); }
+
+/* ---------- documentos com pré-visualização da 1ª página do PDF (uploads
+   reais: docs de ramo e biografias da biblioteca) — renderizada em canvas
+   via pdfjs-dist (ver renderPdfPreview()/hydratePdfPreviews() em main.js).
+   Links/bibliografia da biblioteca continuam como pastilha pequena
+   (.document-item acima), já que nem sempre têm arquivo próprio. ---------- */
+.document-cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 18px; margin-bottom: 26px; }
+.document-card { display: flex; flex-direction: column; gap: 8px; text-decoration: none; }
+.document-card-preview {
+  width: 100%; aspect-ratio: 3 / 4; border-radius: 10px; border: 1px solid var(--border-soft);
+  background: var(--card-alt); background-size: cover; background-position: top center;
+  display: flex; align-items: center; justify-content: center; overflow: hidden; transition: border-color 0.15s ease;
+}
+.document-card:hover .document-card-preview { border-color: var(--teal); }
+.document-card-preview.has-preview { background-color: var(--card); }
+.document-card-icon-fallback { width: 34px; height: 34px; color: var(--text-faint); }
+.document-card-preview.has-preview .document-card-icon-fallback { display: none; }
+.document-card-name { font-weight: 700; font-size: 13px; color: var(--teal); line-height: 1.4; word-break: break-word; }
 
 /* ---------- biblioteca da família (biografias / links / bibliografia) ---------- */
 .library-columns { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; }

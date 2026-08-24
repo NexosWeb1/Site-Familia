@@ -184,7 +184,7 @@
         <div class="library-columns">
           <div class="library-column">
             <h3 class="library-column-title"><span class="icon accent" aria-hidden="true">${icon:file-text}</span> Biografias</h3>
-            <div class="library-list" id="libraryBiografias"></div>
+            <div class="library-list document-cards-grid" id="libraryBiografias"></div>
           </div>
           <div class="library-column">
             <h3 class="library-column-title"><span class="icon accent" aria-hidden="true">${icon:link}</span> Links</h3>
@@ -384,7 +384,7 @@
 
         <section class="modal-screen modal-screen-more">
           <div class="modal-subhead">Documentos</div>
-          <div class="documents-list" id="branchModalDocuments"></div>
+          <div class="documents-list document-cards-grid" id="branchModalDocuments"></div>
 
           <div class="modal-subhead">Comentários e memórias</div>
           <div class="comments-list" id="branchModalComments"></div>
@@ -432,6 +432,19 @@
           <div class="callout-label">Por que importa</div>
           <p class="callout-text" id="placeModalImportance"></p>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== LIGHTBOX (ampliar qualquer foto do site) ===================== -->
+  <div class="modal-overlay lightbox-overlay hidden" id="lightboxModal">
+    <div class="lightbox-content">
+      <button type="button" class="modal-close lightbox-close" id="btnCloseLightbox" aria-label="Fechar">${icon:x}</button>
+      <img class="lightbox-img" id="lightboxImage" src="" alt="">
+      <div class="lightbox-pdf-nav hidden" id="lightboxPdfNav">
+        <button type="button" class="lightbox-pdf-btn" id="btnLightboxPrevPage" aria-label="Página anterior">${icon:chevron-left}</button>
+        <span class="lightbox-pdf-page" id="lightboxPdfPageLabel"></span>
+        <button type="button" class="lightbox-pdf-btn" id="btnLightboxNextPage" aria-label="Próxima página">${icon:chevron-right}</button>
       </div>
     </div>
   </div>
