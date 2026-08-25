@@ -1077,7 +1077,7 @@ function renderSyncLabel() {
 // o valor em state.draft — como state.draft muda a cada edição, quem usa
 // isto precisa chamar `.refresh()` toda vez que reabrir o formulário com
 // um rascunho novo (o listener já fica ligado desde bindStaticEvents()).
-function wirePhotoPicker({ fileInputId, previewId, removeBtnId, progressWrapId, progressBarId, progressLabelId, statusId, getUrl, setUrl }) {
+function wirePhotoPicker({ fileInputId, previewId, removeBtnId, progressWrapId, progressBarId, progressLabelId, statusId, getUrl, setUrl, aspect }) {
   const fileInput = document.getElementById(fileInputId);
   const preview = document.getElementById(previewId);
   const removeBtn = removeBtnId ? document.getElementById(removeBtnId) : null;
@@ -1105,9 +1105,9 @@ function wirePhotoPicker({ fileInputId, previewId, removeBtnId, progressWrapId, 
   fileInput.addEventListener('change', async () => {
     const file = fileInput.files[0];
     if (!file) return;
-    setProgress(0);
     try {
-      const url = await api.uploadPhoto(file, setProgress);
+      const url = await cropAndUploadPhoto(file, aspect || CROP_ASPECT.landscape, setProgress);
+      if (url === null) return; // recorte cancelado
       setUrl(url);
       refresh();
     } catch (err) {
@@ -1135,7 +1135,7 @@ function wirePhotoPicker({ fileInputId, previewId, removeBtnId, progressWrapId, 
 // pelo campo de documentos pra sugerir um nome a partir do arquivo) e
 // `rerender()` (normalmente a própria função de renderização da lista)
 // redesenha tudo, já mostrando a miniatura nova.
-function wireListPhotoUpload(containerId, applyUrl, rerender) {
+function wireListPhotoUpload(containerId, applyUrl, rerender, aspect) {
   document.getElementById(containerId).addEventListener('change', async (e) => {
     const input = e.target.closest('[data-photo-field]');
     if (!input) return;
@@ -1144,9 +1144,9 @@ function wireListPhotoUpload(containerId, applyUrl, rerender) {
     const file = input.files[0];
     if (!file) return;
     const status = document.querySelector(`#${containerId} [data-photo-status-for="${field}-${index}"]`);
-    if (status) status.textContent = 'Enviando… 0%';
     try {
-      const url = await api.uploadPhoto(file, (pct) => { if (status) status.textContent = 'Enviando… ' + pct + '%'; });
+      const url = await cropAndUploadPhoto(file, aspect || CROP_ASPECT.landscape, (pct) => { if (status) status.textContent = 'Enviando… ' + pct + '%'; });
+      if (url === null) { input.value = ''; return; } // recorte cancelado
       applyUrl(field, index, url, file);
       rerender();
     } catch (err) {
@@ -1154,6 +1154,207 @@ function wireListPhotoUpload(containerId, applyUrl, rerender) {
       alert('Não foi possível enviar a foto: ' + err.message);
       if (status) status.textContent = '';
     }
+  });
+}
+
+// Proporções (largura/altura) da moldura de recorte, uma por tipo de campo —
+// espelham como cada foto é exibida de fato no site público (ver CSS:
+// .people-photo 128x140, .branch-photo 400x200, .gallery-photo 1:1 etc.),
+// pra quem recorta já ver a área real que vai aparecer.
+const CROP_ASPECT = {
+  wide: 16 / 9,       // capa da página inicial (hero, plano de fundo em tela cheia)
+  cover: 2 / 1,        // capa do ramo (.branch-photo)
+  portrait: 128 / 140,  // pessoas: pai/mãe/filho/cônjuge/neto/bisneto (.people-photo)
+  landscape: 4 / 3,     // capa de local/origem/encontro (.place-photo, .encontro-panel-photo)
+  square: 1 / 1          // álbuns de fotos (branch/união/encontro — .gallery-photo)
+};
+
+/* ---------------------------------------------------------
+   7c. RECORTE/ZOOM ANTES DO UPLOAD ("Ajustar foto")
+   --------------------------------------------------------- */
+// Estado da sessão de recorte atual (só uma por vez, já que é um modal).
+// `scale` converte pixels da imagem original em pixels de tela dentro da
+// moldura; offsetX/offsetY é a posição (em pixels de tela) do canto
+// top-left da imagem dentro da moldura.
+let cropState = null;
+let cropResolve = null;
+
+function cropClamp(v, min, max) { return Math.min(max, Math.max(min, v)); }
+
+function cropClampOffsets() {
+  const { scale, naturalW, naturalH, vw, vh } = cropState;
+  const iw = naturalW * scale, ih = naturalH * scale;
+  cropState.offsetX = cropClamp(cropState.offsetX, Math.min(0, vw - iw), 0);
+  cropState.offsetY = cropClamp(cropState.offsetY, Math.min(0, vh - ih), 0);
+}
+
+function cropApplyTransform() {
+  const { img, offsetX, offsetY, scale } = cropState;
+  img.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
+}
+
+function cropZoomTo(newScale, centerX, centerY) {
+  const { minScale } = cropState;
+  newScale = cropClamp(newScale, minScale, minScale * 3);
+  const imgX = (centerX - cropState.offsetX) / cropState.scale;
+  const imgY = (centerY - cropState.offsetY) / cropState.scale;
+  cropState.scale = newScale;
+  cropState.offsetX = centerX - imgX * newScale;
+  cropState.offsetY = centerY - imgY * newScale;
+  cropClampOffsets();
+  cropApplyTransform();
+  document.getElementById('cropZoom').value = Math.round((newScale / minScale) * 100);
+}
+
+function cropCleanup() {
+  if (cropState) URL.revokeObjectURL(cropState.url);
+  cropState = null;
+}
+
+function cropCancel() {
+  if (!cropState) return;
+  const resolve = cropResolve;
+  cropCleanup();
+  cropResolve = null;
+  hideModal('cropModal');
+  if (resolve) resolve(null);
+}
+
+function cropConfirm() {
+  if (!cropState) return;
+  const { img, naturalW, naturalH, scale, offsetX, offsetY, vw, vh, file } = cropState;
+  const sx = cropClamp(-offsetX / scale, 0, naturalW);
+  const sy = cropClamp(-offsetY / scale, 0, naturalH);
+  const sw = Math.min(vw / scale, naturalW - sx);
+  const sh = Math.min(vh / scale, naturalH - sy);
+
+  const MAX_OUT = 1600;
+  let outW = Math.round(sw), outH = Math.round(sh);
+  if (outW > MAX_OUT || outH > MAX_OUT) {
+    if (outW >= outH) { outH = Math.round(outH * MAX_OUT / outW); outW = MAX_OUT; }
+    else { outW = Math.round(outW * MAX_OUT / outH); outH = MAX_OUT; }
+  }
+
+  const canvas = document.createElement('canvas');
+  canvas.width = outW;
+  canvas.height = outH;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(img, sx, sy, sw, sh, 0, 0, outW, outH);
+
+  const mime = (file.type === 'image/png' || file.type === 'image/webp') ? file.type : 'image/jpeg';
+  const ext = mime === 'image/png' ? 'png' : (mime === 'image/webp' ? 'webp' : 'jpg');
+  canvas.toBlob((blob) => {
+    const resolve = cropResolve;
+    const newName = file.name.replace(/\.[^./]+$/, '') + '_recorte.' + ext;
+    const cropped = new File([blob], newName, { type: mime });
+    cropCleanup();
+    cropResolve = null;
+    hideModal('cropModal');
+    if (resolve) resolve(cropped);
+  }, mime, 0.9);
+}
+
+// Abre o modal "Ajustar foto" pra `file` (deve ser image/*) com a moldura na
+// proporção `aspect` (largura/altura, ver CROP_ASPECT acima). Resolve com um
+// novo File já recortado, ou `null` se o admin cancelar.
+function cropImageFile(file, aspect) {
+  return new Promise((resolve) => {
+    cropResolve = resolve;
+    const viewport = document.getElementById('cropViewport');
+    const img = document.getElementById('cropImage');
+    const url = URL.createObjectURL(file);
+
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      cropResolve = null;
+      alert('Não foi possível abrir essa imagem.');
+      resolve(null);
+    };
+    img.onload = () => {
+      const maxW = Math.min(440, window.innerWidth - 96);
+      const maxH = Math.min(420, window.innerHeight * 0.5);
+      let vw = maxW, vh = vw / aspect;
+      if (vh > maxH) { vh = maxH; vw = vh * aspect; }
+      viewport.style.width = vw + 'px';
+      viewport.style.height = vh + 'px';
+
+      const minScale = Math.max(vw / img.naturalWidth, vh / img.naturalHeight);
+      cropState = {
+        img, url, file,
+        naturalW: img.naturalWidth, naturalH: img.naturalHeight,
+        vw, vh, minScale, scale: minScale,
+        offsetX: (vw - img.naturalWidth * minScale) / 2,
+        offsetY: (vh - img.naturalHeight * minScale) / 2,
+        dragging: false
+      };
+      document.getElementById('cropZoom').value = 100;
+      cropApplyTransform();
+      showModal('cropModal');
+    };
+    img.src = url;
+  });
+}
+
+// Envia `file` pro bucket "fotos", passando primeiro pelo modal de
+// recorte/zoom quando for uma imagem (documentos em PDF pulam direto pro
+// upload). Retorna a URL pública, ou `null` se o admin cancelar o recorte —
+// quem chama deve tratar esse caso sem tocar em state.draft.
+async function cropAndUploadPhoto(file, aspect, onProgress) {
+  let toUpload = file;
+  if (file.type && file.type.startsWith('image/')) {
+    const cropped = await cropImageFile(file, aspect);
+    if (!cropped) return null;
+    toUpload = cropped;
+  }
+  return api.uploadPhoto(toUpload, onProgress);
+}
+
+function bindCropModal() {
+  const viewport = document.getElementById('cropViewport');
+  const img = document.getElementById('cropImage');
+
+  viewport.addEventListener('pointerdown', (e) => {
+    if (!cropState) return;
+    cropState.dragging = true;
+    cropState.startX = e.clientX;
+    cropState.startY = e.clientY;
+    cropState.startOffsetX = cropState.offsetX;
+    cropState.startOffsetY = cropState.offsetY;
+    viewport.setPointerCapture(e.pointerId);
+    viewport.classList.add('is-dragging');
+  });
+  viewport.addEventListener('pointermove', (e) => {
+    if (!cropState || !cropState.dragging) return;
+    cropState.offsetX = cropState.startOffsetX + (e.clientX - cropState.startX);
+    cropState.offsetY = cropState.startOffsetY + (e.clientY - cropState.startY);
+    cropClampOffsets();
+    cropApplyTransform();
+  });
+  const endDrag = () => {
+    if (!cropState) return;
+    cropState.dragging = false;
+    viewport.classList.remove('is-dragging');
+  };
+  viewport.addEventListener('pointerup', endDrag);
+  viewport.addEventListener('pointercancel', endDrag);
+  viewport.addEventListener('wheel', (e) => {
+    if (!cropState) return;
+    e.preventDefault();
+    const rect = viewport.getBoundingClientRect();
+    const factor = 1 - e.deltaY * 0.001;
+    cropZoomTo(cropState.scale * factor, e.clientX - rect.left, e.clientY - rect.top);
+  }, { passive: false });
+
+  document.getElementById('cropZoom').addEventListener('input', (e) => {
+    if (!cropState) return;
+    cropZoomTo(cropState.minScale * (+e.target.value / 100), cropState.vw / 2, cropState.vh / 2);
+  });
+
+  document.getElementById('btnCropConfirm').addEventListener('click', cropConfirm);
+  document.getElementById('btnCropCancel').addEventListener('click', cropCancel);
+  document.getElementById('btnCropClose').addEventListener('click', cropCancel);
+  document.getElementById('cropModal').addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) cropCancel();
   });
 }
 
@@ -1817,6 +2018,7 @@ function deleteMemoria(id) {
    12. EVENTOS ESTÁTICOS (botões fixos do HTML)
    --------------------------------------------------------- */
 function bindStaticEvents() {
+  bindCropModal();
   document.getElementById('btnRetryLoad').addEventListener('click', async () => { await loadData(); renderAll(); });
 
   document.getElementById('btnGoAdminFooter').addEventListener('click', goAdmin);
@@ -1857,7 +2059,7 @@ function bindStaticEvents() {
   heroPhotoPicker = wirePhotoPicker({
     fileInputId: 'editHeroPhotoFile', previewId: 'editHeroPhotoPreview', removeBtnId: 'editHeroPhotoRemove',
     progressWrapId: 'editHeroPhotoProgress', progressBarId: 'editHeroPhotoProgressBar', progressLabelId: 'editHeroPhotoProgressLabel',
-    getUrl: () => state.draft.photo, setUrl: (url) => { state.draft.photo = url; }
+    getUrl: () => state.draft.photo, setUrl: (url) => { state.draft.photo = url; }, aspect: CROP_ASPECT.wide
   });
   document.getElementById('encontrosEditList').addEventListener('input', (e) => {
     const field = e.target.dataset.field, idx = e.target.dataset.index;
@@ -1875,10 +2077,9 @@ function bindStaticEvents() {
       const file = input.files[0];
       if (!file) return;
       const status = document.querySelector(`#encontrosEditList [data-photo-status-for="photo-${index}"]`);
-      if (status) status.textContent = 'Enviando… 0%';
       try {
-        const url = await api.uploadPhoto(file, (pct) => { if (status) status.textContent = 'Enviando… ' + pct + '%'; });
-        encontro.photo = url;
+        const url = await cropAndUploadPhoto(file, CROP_ASPECT.landscape, (pct) => { if (status) status.textContent = 'Enviando… ' + pct + '%'; });
+        if (url !== null) encontro.photo = url;
       } catch (err) {
         console.error(err);
         alert('Não foi possível enviar a foto: ' + err.message);
@@ -1895,8 +2096,8 @@ function bindStaticEvents() {
       try {
         for (let i = 0; i < files.length; i++) {
           if (status) status.textContent = `Enviando ${i + 1} de ${files.length}…`;
-          const url = await api.uploadPhoto(files[i]);
-          encontro.photos.push({ url });
+          const url = await cropAndUploadPhoto(files[i], CROP_ASPECT.square);
+          if (url !== null) encontro.photos.push({ url });
         }
       } catch (err) {
         console.error(err);
@@ -1915,7 +2116,7 @@ function bindStaticEvents() {
   branchPhotoPicker = wirePhotoPicker({
     fileInputId: 'editBranchPhotoFile', previewId: 'editBranchPhotoPreview', removeBtnId: 'editBranchPhotoRemove',
     progressWrapId: 'editBranchPhotoProgress', progressBarId: 'editBranchPhotoProgressBar', progressLabelId: 'editBranchPhotoProgressLabel',
-    getUrl: () => state.draft.photo, setUrl: (url) => { state.draft.photo = url; }
+    getUrl: () => state.draft.photo, setUrl: (url) => { state.draft.photo = url; }, aspect: CROP_ASPECT.cover
   });
 
   document.getElementById('btnAddCouple').addEventListener('click', () => {
@@ -1983,9 +2184,9 @@ function bindStaticEvents() {
     if (!file) return;
     const statusKey = [field, ci, idx, gi].filter(v => v !== undefined).join('-');
     const status = document.querySelector(`#couplesEditList [data-photo-status-for="${statusKey}"]`);
-    if (status) status.textContent = 'Enviando… 0%';
     try {
-      const url = await api.uploadPhoto(file, (pct) => { if (status) status.textContent = 'Enviando… ' + pct + '%'; });
+      const url = await cropAndUploadPhoto(file, CROP_ASPECT.portrait, (pct) => { if (status) status.textContent = 'Enviando… ' + pct + '%'; });
+      if (url === null) { input.value = ''; return; }
       const couple = state.draft.couples[ci];
       if (field === 'fatherPhoto') couple.father.photo = url;
       else if (field === 'motherPhoto') couple.mother.photo = url;
@@ -2018,7 +2219,7 @@ function bindStaticEvents() {
   });
   wireListPhotoUpload('branchPhotosEditList', (field, index, url) => {
     state.draft.photos[index].url = url;
-  }, renderBranchPhotosEditList);
+  }, renderBranchPhotosEditList, CROP_ASPECT.square);
 
   document.getElementById('btnAddDocument').addEventListener('click', () => {
     state.draft.documents = state.draft.documents || [];
@@ -2056,7 +2257,7 @@ function bindStaticEvents() {
   });
   wireListPhotoUpload('unionPhotosEditList', (field, index, url) => {
     state.draft.photos[index].url = url;
-  }, renderUnionPhotosEditList);
+  }, renderUnionPhotosEditList, CROP_ASPECT.square);
 
   document.getElementById('btnEditHistory').addEventListener('click', openEditHistory);
   document.getElementById('btnCancelEditHistory').addEventListener('click', () => hideModal('editHistoryModal'));
@@ -2117,7 +2318,7 @@ function bindStaticEvents() {
   originPhotoPicker = wirePhotoPicker({
     fileInputId: 'editOriginPhotoFile', previewId: 'editOriginPhotoPreview', removeBtnId: 'editOriginPhotoRemove',
     progressWrapId: 'editOriginPhotoProgress', progressBarId: 'editOriginPhotoProgressBar', progressLabelId: 'editOriginPhotoProgressLabel',
-    getUrl: () => state.draft.photo, setUrl: (url) => { state.draft.photo = url; }
+    getUrl: () => state.draft.photo, setUrl: (url) => { state.draft.photo = url; }, aspect: CROP_ASPECT.landscape
   });
 
   document.getElementById('btnNewPlace').addEventListener('click', newPlace);
@@ -2130,7 +2331,7 @@ function bindStaticEvents() {
   placePhotoPicker = wirePhotoPicker({
     fileInputId: 'editPlacePhotoFile', previewId: 'editPlacePhotoPreview', removeBtnId: 'editPlacePhotoRemove',
     progressWrapId: 'editPlacePhotoProgress', progressBarId: 'editPlacePhotoProgressBar', progressLabelId: 'editPlacePhotoProgressLabel',
-    getUrl: () => state.draft.photo, setUrl: (url) => { state.draft.photo = url; }
+    getUrl: () => state.draft.photo, setUrl: (url) => { state.draft.photo = url; }, aspect: CROP_ASPECT.landscape
   });
 
   document.getElementById('memoriaForm').addEventListener('submit', submitMemoriaForm);
@@ -2253,6 +2454,7 @@ function bindStaticEvents() {
     overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.classList.add('hidden'); });
   });
   document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !document.getElementById('cropModal').classList.contains('hidden')) { cropCancel(); return; }
     if (e.key === 'Escape') { hideAllModals(); return; }
     if (!pdfViewer || document.getElementById('lightboxModal').classList.contains('hidden')) return;
     if (e.key === 'ArrowLeft') changePdfViewerPage(-1);

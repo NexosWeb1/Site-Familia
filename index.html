@@ -436,6 +436,35 @@
     </div>
   </div>
 
+  <!-- ===================== AJUSTAR FOTO (recorte/zoom antes do upload) ===================== -->
+  <div class="modal-overlay hidden" id="cropModal">
+    <div class="modal modal-crop" id="cropModalBox">
+      <div class="modal-form-header">
+        <h3>Ajustar foto</h3>
+        <button type="button" class="modal-close-light" id="btnCropClose" aria-label="Fechar">${icon:x}</button>
+      </div>
+      <div class="modal-form-body crop-modal-body">
+        <div class="crop-stage">
+          <div class="crop-viewport" id="cropViewport">
+            <img class="crop-image" id="cropImage" draggable="false" alt="">
+          </div>
+        </div>
+        <div class="crop-controls">
+          <span class="icon crop-zoom-icon" aria-hidden="true">${icon:image}</span>
+          <input type="range" class="crop-zoom-slider" id="cropZoom" min="100" max="300" value="100" step="1">
+          <span class="icon crop-zoom-icon crop-zoom-icon-lg" aria-hidden="true">${icon:image}</span>
+        </div>
+        <p class="crop-hint">Arraste a foto para posicionar e use o controle para dar zoom. A área dentro da moldura é o que vai aparecer no site.</p>
+      </div>
+      <div class="modal-form-footer">
+        <button type="button" class="btn btn-outline" id="btnCropCancel">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="btnCropConfirm">
+          <span class="icon" aria-hidden="true">${icon:save}</span> Usar esta foto
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- ===================== LIGHTBOX (ampliar qualquer foto do site) ===================== -->
   <div class="modal-overlay lightbox-overlay hidden" id="lightboxModal">
     <div class="lightbox-content">
