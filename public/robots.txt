@@ -1,0 +1,18 @@
+# robots.txt — Memórias & Legado
+# Gerado por scripts/generate-seo-files.mjs (npm run build). Não edite à mão.
+
+User-agent: *
+Allow: /
+
+# Assets necessários para o Google renderizar a página corretamente.
+Allow: /assets/
+Allow: /*.css$
+Allow: /*.js$
+Allow: /*.mjs$
+Allow: /*.svg$
+Allow: /*.png$
+Allow: /*.jpg$
+Allow: /*.jpeg$
+Allow: /*.webp$
+
+Sitemap: https://familiapintoarrudaleda.com.br/sitemap.xml

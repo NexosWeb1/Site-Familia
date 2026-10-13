@@ -7,10 +7,28 @@
   <meta name="color-scheme" content="light">
   <title>Memórias &amp; Legado — Site de Memória e História Familiar</title>
   <meta name="description" content="Um arquivo vivo de memórias, ramos genealógicos e locais marcantes da família.">
+  <!-- Indexação: o valor padrão vale para o site público. O painel
+       administrativo não tem URL própria (é uma troca de view no mesmo
+       documento), então src/seo.js troca esta tag para "noindex, nofollow"
+       enquanto ele estiver aberto — ver setIndexable(). -->
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+  <!-- href relativo: resolve para a raiz do próprio domínio em qualquer
+       ambiente (dev, preview, produção). src/seo.js reescreve com a URL
+       absoluta preferencial assim que a página carrega — ver
+       applyCanonical()/VITE_SITE_URL. -->
+  <link rel="canonical" href="/">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://yzrlfjxhtoacbvyvlbkc.supabase.co" crossorigin>
+  <!-- Preload da folha de estilo das fontes (recurso crítico: as duas
+       famílias tipográficas do site inteiro vêm dela). A tag <link
+       rel="stylesheet"> logo abaixo continua sendo quem realmente aplica
+       o CSS — o preload só antecipa o download. A foto do hero, que é o
+       elemento de LCP, é pré-carregada em tempo de execução por
+       preloadLcpImage() (src/seo.js), já que a URL dela vem do Supabase. -->
+  <link rel="preload" as="style"
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&family=Nunito+Sans:wght@400;600;700;800&display=swap">
   <link
     href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&family=Nunito+Sans:wght@400;600;700;800&display=swap"
     rel="stylesheet">
@@ -227,7 +245,12 @@
       </div>
     </div>
 
-    <h1 class="admin-title">Painel de Gestão</h1>
+    <!-- h2, não h1: o único <h1> do documento é o do hero (a view pública e
+         a administrativa vivem no mesmo HTML, alternadas pela classe
+         "hidden"). A classe .admin-title define font-family, font-weight,
+         font-size e margin explicitamente, então a troca de tag não muda
+         um pixel do visual. -->
+    <h2 class="admin-title">Painel de Gestão</h2>
     <p class="admin-subtitle">Edite os conteúdos do site. As alterações são salvas direto no banco de dados (Supabase) e
       ficam visíveis para todos os visitantes.</p>
 
@@ -446,7 +469,8 @@
       <div class="modal-form-body crop-modal-body">
         <div class="crop-stage">
           <div class="crop-viewport" id="cropViewport">
-            <img class="crop-image" id="cropImage" draggable="false" alt="">
+            <img class="crop-image" id="cropImage" draggable="false" decoding="async"
+              alt="Prévia da foto sendo recortada">
           </div>
         </div>
         <div class="crop-controls">
@@ -469,7 +493,10 @@
   <div class="modal-overlay lightbox-overlay hidden" id="lightboxModal">
     <div class="lightbox-content">
       <button type="button" class="modal-close lightbox-close" id="btnCloseLightbox" aria-label="Fechar">${icon:x}</button>
-      <img class="lightbox-img" id="lightboxImage" src="" alt="">
+      <!-- alt preenchido em tempo de execução por openLightbox()/
+           showPdfViewerPage() (src/main.js), que é quem sabe se o que está
+           aberto é uma foto ou uma página de PDF. -->
+      <img class="lightbox-img" id="lightboxImage" src="" alt="" decoding="async">
       <div class="lightbox-pdf-nav hidden" id="lightboxPdfNav">
         <button type="button" class="lightbox-pdf-btn" id="btnLightboxPrevPage" aria-label="Página anterior">${icon:chevron-left}</button>
         <span class="lightbox-pdf-page" id="lightboxPdfPageLabel"></span>

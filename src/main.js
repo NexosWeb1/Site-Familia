@@ -3,6 +3,7 @@
    JavaScript Vanilla (ES6+) — dados e mídia no Supabase (ver src/api.js)
    ========================================================= */
 import * as api from './api.js';
+import * as seo from './seo.js';
 import pdfjsWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 
 // pdfjs-dist só é carregado (import dinâmico) quando a primeira prévia de
@@ -142,6 +143,18 @@ function photoStyle(url) {
 function avatarStyle(url) {
   return url ? `background-image:url('${escapeHtml(url)}')` : 'background-image:linear-gradient(135deg,#2f7a31,#1c4a1e)';
 }
+// Quase toda foto do site é um background-image de um <span>/<div> (não um
+// <img>), porque é o que permite o enquadramento por cover sem esticar o
+// layout — trocar por <img> mudaria o desenho da página. Um background-image
+// não aceita alt, então o equivalente acessível é role="img" + aria-label:
+// é exatamente o que um leitor de tela anuncia no lugar do alt, e não muda
+// nada visualmente. Só é aplicado quando existe foto de verdade: sem foto o
+// elemento é só um placeholder decorativo (ou tem a sigla do nome dentro,
+// que já é o texto acessível).
+function photoA11y(url, label) {
+  if (!url || !label) return '';
+  return `role="img" aria-label="${escapeHtml(label)}"`;
+}
 // Atributo data-lightbox="URL" pra qualquer elemento clicável de foto (ver
 // openLightbox()/bindStaticEvents() mais abaixo) — vazio quando não há foto,
 // pra não deixar um placeholder clicável abrindo um lightbox sem imagem.
@@ -155,10 +168,23 @@ function heroBgStyle(url) {
 // origin.flag é a URL de uma imagem de bandeira (escolhida no <select> do
 // admin, ex: flagcdn.com). Mantém um fallback pro formato antigo (emoji de
 // bandeira) e um ícone genérico quando não há bandeira definida.
+// width/height batem com o tamanho que o CSS já fixa para cada classe
+// (.origin-tab-flag 22x16, .origin-eyebrow-flag 20x15, ver style.css) — os
+// atributos só reservam o espaço antes de a imagem chegar, eliminando o
+// deslocamento de layout (CLS); quem manda no tamanho final continua sendo
+// o CSS. alt="" porque o nome do país aparece como texto logo ao lado: uma
+// bandeira anunciada aqui só repetiria o que o leitor de tela já vai ler.
+const FLAG_SIZES = {
+  'origin-tab-flag': { w: 22, h: 16 },
+  'origin-eyebrow-flag': { w: 20, h: 15 }
+};
 function flagHtml(flag, cls) {
   cls = cls || '';
   if (!flag) return `<span class="icon ${cls}" aria-hidden="true">${iconHtml('map-pin')}</span>`;
-  if (/^https?:\/\//.test(flag)) return `<img class="${cls}" src="${escapeHtml(flag)}" alt="" loading="lazy">`;
+  if (/^https?:\/\//.test(flag)) {
+    const size = FLAG_SIZES[cls] || { w: 22, h: 16 };
+    return `<img class="${cls}" src="${escapeHtml(flag)}" alt="" width="${size.w}" height="${size.h}" loading="lazy" decoding="async">`;
+  }
   return `<span class="${cls}">${escapeHtml(flag)}</span>`;
 }
 
@@ -240,7 +266,11 @@ function renderHero() {
   document.getElementById('heroFamilyName').textContent = hero.familyName;
   document.getElementById('heroMotto').textContent = hero.motto;
   document.getElementById('footerFamilyName').textContent = hero.familyName;
+  // Preload antes de aplicar o background, pra a foto do hero (o LCP) sair
+  // com prioridade alta; depois canonical/Open Graph/JSON-LD no <head>.
+  seo.preloadLcpImage(hero.photo);
   document.getElementById('topo').style.cssText += heroBgStyle(hero.photo);
+  seo.applyHeroSeo(hero);
 }
 
 function renderHistory() {
@@ -278,7 +308,7 @@ function renderEncontroPanel(e) {
   const panelEl = document.getElementById('encontrosPanel');
   panelEl.innerHTML = `
     <div class="encontro-panel-card">
-      <span class="encontro-panel-photo" style="${photoStyle(e.photo)}" ${lightboxAttr(e.photo)}>
+      <span class="encontro-panel-photo" style="${photoStyle(e.photo)}" ${lightboxAttr(e.photo)} ${photoA11y(e.photo, `Foto do encontro ${e.title || ''}`.trim())}>
         ${!e.photo ? '<span class="no-photo-label">FOTO DO ENCONTRO</span>' : ''}
       </span>
       <div class="encontro-panel-body">
@@ -300,7 +330,7 @@ function renderFamilyUnion() {
   const strip = document.getElementById('unionPhotosStrip');
   const photos = (u.photos || []).slice(0, 4);
   strip.innerHTML = photos.length
-    ? photos.map(p => `<span class="union-photo-thumb" style="${photoStyle(p.url)}" ${lightboxAttr(p.url)}></span>`).join('')
+    ? photos.map(p => `<span class="union-photo-thumb" style="${photoStyle(p.url)}" ${lightboxAttr(p.url)} ${photoA11y(p.url, p.caption || 'Foto da família')}></span>`).join('')
     : `<span class="union-photo-thumb placeholder icon">${iconHtml('image')}</span>`;
 }
 
@@ -309,7 +339,7 @@ function renderBranches() {
   const branches = state.data.branches || [];
   grid.innerHTML = branches.map((b) => `
     <button type="button" class="branch-card" data-action="openBranch" data-id="${b.id}">
-      <span class="branch-photo" style="${photoStyle(b.photo)}">
+      <span class="branch-photo" style="${photoStyle(b.photo)}" ${photoA11y(b.photo, `Foto do ramo ${b.name || ''}`.trim())}>
         ${!b.photo ? '<span class="no-photo-label">FOTO DO RAMO</span>' : ''}
         <span class="branch-badge icon">${iconHtml('tree')}</span>
       </span>
@@ -333,7 +363,7 @@ function renderPlaces() {
   const places = state.data.places || [];
   grid.innerHTML = places.map((p) => `
     <button type="button" class="place-card" data-action="openPlace" data-id="${p.id}">
-      <span class="place-photo" style="${photoStyle(p.photo)}">
+      <span class="place-photo" style="${photoStyle(p.photo)}" ${photoA11y(p.photo, p.name)}>
         ${!p.photo ? '<span class="no-photo-label">FOTO DO LOCAL</span>' : ''}
       </span>
       <span class="place-body">
@@ -374,7 +404,7 @@ function renderOriginPanel(o) {
   const panelEl = document.getElementById('originsPanel');
   panelEl.innerHTML = `
     <div class="encontro-panel-card origin-panel-card">
-      <span class="encontro-panel-photo" style="${photoStyle(o.photo)}" ${lightboxAttr(o.photo)}>
+      <span class="encontro-panel-photo" style="${photoStyle(o.photo)}" ${lightboxAttr(o.photo)} ${photoA11y(o.photo, o.name)}>
         ${!o.photo ? '<span class="no-photo-label">FOTO DA ORIGEM</span>' : ''}
       </span>
       <div class="encontro-panel-body">
@@ -396,7 +426,7 @@ function renderMemorias() {
   grid.innerHTML = items.length
     ? items.map((m) => `
       <div class="memoria-card">
-        <span class="memoria-thumb" style="${m.tipo === 'foto' ? photoStyle(m.url) : ''}" ${m.tipo === 'foto' ? lightboxAttr(m.url) : ''}>
+        <span class="memoria-thumb" style="${m.tipo === 'foto' ? photoStyle(m.url) : ''}" ${m.tipo === 'foto' ? lightboxAttr(m.url) : ''} ${m.tipo === 'foto' ? photoA11y(m.url, m.titulo) : ''}>
           ${m.tipo !== 'foto' ? `<span class="icon memoria-doc-icon" aria-hidden="true">${iconHtml('file-text')}</span>` : ''}
         </span>
         <div class="memoria-body">
@@ -438,7 +468,7 @@ function peopleRowSizeClass(row) {
 }
 function peoplePhotoHtml(p, sizeClass) {
   return `
-    <div class="people-photo ${sizeClass || ''}" data-person-id="${p.pid}" style="${avatarStyle(p.photo)}">
+    <div class="people-photo ${sizeClass || ''}" data-person-id="${p.pid}" style="${avatarStyle(p.photo)}" ${photoA11y(p.photo, p.name)}>
       ${!p.photo ? `<span class="people-photo-fallback">${escapeHtml(initials(p.name))}</span>` : ''}
     </div>`;
 }
@@ -561,6 +591,8 @@ function openPersonSpotlight(spotlight, grid, modalBox, p) {
   const spotlightPhotoEl = spotlight.querySelector('.people-spotlight-photo');
   spotlightPhotoEl.style.cssText = avatarStyle(p.photo);
   if (p.photo) spotlightPhotoEl.dataset.lightbox = p.photo;
+  if (p.photo) { spotlightPhotoEl.setAttribute('role', 'img'); spotlightPhotoEl.setAttribute('aria-label', p.name); }
+  else { spotlightPhotoEl.removeAttribute('role'); spotlightPhotoEl.removeAttribute('aria-label'); }
   spotlight.classList.remove('hidden');
   grid.classList.add('hidden');
   if (modalBox) modalBox.classList.add('is-focused');
@@ -581,7 +613,7 @@ function treePersonHtml(person, role) {
   if (!person || !person.name) return '';
   return `
     <div class="tree-person">
-      <div class="tree-person-photo" style="${avatarStyle(person.photo)}" ${lightboxAttr(person.photo)}>
+      <div class="tree-person-photo" style="${avatarStyle(person.photo)}" ${lightboxAttr(person.photo)} ${photoA11y(person.photo, person.name)}>
         ${!person.photo ? `<span class="tree-person-fallback">${escapeHtml(initials(person.name))}</span>` : ''}
       </div>
       <div class="tree-person-name">${escapeHtml(person.name)}</div>
@@ -669,7 +701,7 @@ function galleryHtml(photos) {
   return (photos || []).length
     ? photos.map(p => `
       <div class="gallery-item">
-        <span class="gallery-photo" style="${photoStyle(p.url)}" ${lightboxAttr(p.url)}></span>
+        <span class="gallery-photo" style="${photoStyle(p.url)}" ${lightboxAttr(p.url)} ${photoA11y(p.url, p.caption || 'Foto do álbum da família')}></span>
         ${p.caption ? `<span class="gallery-caption">${escapeHtml(p.caption)}</span>` : ''}
       </div>`).join('')
     : '<p class="modal-story">Nenhuma foto adicionada ainda.</p>';
@@ -854,6 +886,8 @@ function openPlaceModal(id) {
   photoEl.querySelectorAll('.no-photo-label').forEach(n => n.remove());
   if (!p.photo) photoEl.insertAdjacentHTML('beforeend', '<span class="no-photo-label">FOTO DO LOCAL</span>');
   if (p.photo) photoEl.dataset.lightbox = p.photo; else delete photoEl.dataset.lightbox;
+  if (p.photo) { photoEl.setAttribute('role', 'img'); photoEl.setAttribute('aria-label', p.name || 'Foto do local'); }
+  else { photoEl.removeAttribute('role'); photoEl.removeAttribute('aria-label'); }
   document.getElementById('placeModalName').textContent = p.name;
   document.getElementById('placeModalStory').textContent = p.story;
   document.getElementById('placeModalImportance').textContent = p.importance;
@@ -871,11 +905,13 @@ function hideAllModals() {
 // bindStaticEvents(). Usa <img> (não background-image) de propósito: é o
 // que permite o gesto de pinça pra dar zoom no celular, que é justamente o
 // que foi pedido.
-function openLightbox(url) {
+function openLightbox(url, label) {
   if (!url) return;
   pdfViewer = null;
   document.getElementById('lightboxPdfNav').classList.add('hidden');
-  document.getElementById('lightboxImage').src = url;
+  const img = document.getElementById('lightboxImage');
+  img.alt = label || 'Foto ampliada';
+  img.src = url;
   showModal('lightboxModal');
 }
 
@@ -911,7 +947,9 @@ async function showPdfViewerPage() {
     // Confere se o visitante não trocou de página/fechou o lightbox
     // enquanto a página anterior ainda estava renderizando.
     if (pdfViewer && pdfViewer.url === url && pdfViewer.page === page) {
-      document.getElementById('lightboxImage').src = dataUrl;
+      const img = document.getElementById('lightboxImage');
+      img.alt = `Documento — página ${page} de ${totalPages}`;
+      img.src = dataUrl;
     }
   } catch (err) {
     console.error('Não foi possível renderizar a página do PDF:', err);
@@ -973,6 +1011,9 @@ function goPublic() { state.view = 'public'; renderViewToggle(); }
 function renderViewToggle() {
   document.getElementById('publicView').classList.toggle('hidden', state.view !== 'public');
   document.getElementById('adminView').classList.toggle('hidden', state.view !== 'admin');
+  // O painel não tem URL própria, então o noindex é trocado em tempo de
+  // execução enquanto ele estiver aberto (ver setIndexable() em src/seo.js).
+  seo.setIndexable(state.view !== 'admin');
 }
 
 /* ---------------------------------------------------------
@@ -2348,7 +2389,7 @@ function bindStaticEvents() {
     // carrega data-lightbox no seu contêiner pai).
     const photoTarget = e.target.closest('[data-lightbox]');
     if (photoTarget && !e.target.closest('button, a')) {
-      openLightbox(photoTarget.dataset.lightbox);
+      openLightbox(photoTarget.dataset.lightbox, photoTarget.getAttribute('aria-label'));
       return;
     }
 

@@ -6,6 +6,7 @@
   "description": "Site de memória e história familiar, com dados e mídia no Supabase.",
   "scripts": {
     "dev": "vite",
+    "prebuild": "node scripts/generate-seo-files.mjs",
     "build": "vite build",
     "preview": "vite preview"
   },
