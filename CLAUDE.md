@@ -540,3 +540,8 @@ project — that has to be created once, by hand, in the Supabase dashboard:
    key into `.env` (`VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY`) —
    copy `.env.example` first if `.env` doesn't exist yet.
 6. `npm install && npm run dev` (or `npm run build` for production).
+7. GitHub repo → Settings → Secrets and variables → Actions → add
+   `SUPABASE_URL` and `SUPABASE_ANON_KEY` (same values as `.env`). Used by
+   `.github/workflows/supabase-keepalive.yml`, which queries the `hero`
+   table every 3 days so the free-plan project doesn't get paused for
+   inactivity (Supabase pauses free projects after 7 idle days).

@@ -1,0 +1,36 @@
+# Mantém o projeto Supabase (plano gratuito) ativo.
+# O Supabase pausa projetos gratuitos após 7 dias sem atividade; este
+# workflow faz uma consulta real ao banco a cada 3 dias para evitar isso.
+#
+# Requer dois secrets no repositório (Settings → Secrets and variables →
+# Actions): SUPABASE_URL e SUPABASE_ANON_KEY — os mesmos valores do .env.
+name: Supabase keep-alive
+
+on:
+  schedule:
+    - cron: '0 12 */3 * *'   # a cada 3 dias, 12:00 UTC
+  workflow_dispatch:          # permite rodar manualmente pela aba Actions
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Consulta o banco
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "::error::Secrets SUPABASE_URL / SUPABASE_ANON_KEY não configurados."
+            exit 1
+          fi
+          status=$(curl -s -o response.txt -w "%{http_code}" \
+            "$SUPABASE_URL/rest/v1/hero?select=id&limit=1" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY")
+          echo "HTTP $status"
+          cat response.txt
+          if [ "$status" -lt 200 ] || [ "$status" -ge 300 ]; then
+            echo "::error::Supabase respondeu HTTP $status"
+            exit 1
+          fi
