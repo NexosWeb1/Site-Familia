@@ -20,10 +20,20 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
+          # Limpa o que costuma vir junto ao colar o secret: um prefixo
+          # "NOME=" copiado do .env, aspas, espaços/quebras de linha e uma
+          # barra final na URL.
+          clean() { printf '%s' "$1" | sed -E 's/^[A-Z_]+=//' | tr -d "\"' \r\n\t"; }
+          SUPABASE_URL=$(clean "$SUPABASE_URL"); SUPABASE_URL=${SUPABASE_URL%/}
+          SUPABASE_ANON_KEY=$(clean "$SUPABASE_ANON_KEY")
           if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
             echo "::error::Secrets SUPABASE_URL / SUPABASE_ANON_KEY não configurados."
             exit 1
           fi
+          case "$SUPABASE_URL" in
+            https://*.supabase.co) ;;
+            *) echo "::error::SUPABASE_URL deve ser no formato https://xxxx.supabase.co"; exit 1 ;;
+          esac
           status=$(curl -s -o response.txt -w "%{http_code}" \
             "$SUPABASE_URL/rest/v1/hero?select=id&limit=1" \
             -H "apikey: $SUPABASE_ANON_KEY" \
